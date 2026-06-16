@@ -152,6 +152,8 @@ Newton-Raphson solver, so what you see is the round-trip: parametric vol -> pric
 
 ## Known limitations and possible extensions
 
+> Tracked in [EXTENSIONS.md](EXTENSIONS.md).
+
 ### Model limitations
 
 The current implementation makes several simplifying assumptions that would not
