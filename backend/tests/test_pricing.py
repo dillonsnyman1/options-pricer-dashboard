@@ -62,6 +62,29 @@ class TestBlackScholes:
         iv = black_scholes.implied_vol(p, S, K, T, r, "call")
         assert abs(iv - vol) < 1e-5
 
+    def test_dividend_lowers_call_price(self):
+        c_no_div = black_scholes.price(S, K, T, r, sigma, "call", q=0.0)
+        c_div = black_scholes.price(S, K, T, r, sigma, "call", q=0.03)
+        assert c_div < c_no_div
+
+    def test_dividend_raises_put_price(self):
+        p_no_div = black_scholes.price(S, K, T, r, sigma, "put", q=0.0)
+        p_div = black_scholes.price(S, K, T, r, sigma, "put", q=0.03)
+        assert p_div > p_no_div
+
+    def test_put_call_parity_with_dividends(self):
+        q = 0.03
+        c = black_scholes.price(S, K, T, r, sigma, "call", q=q)
+        p = black_scholes.price(S, K, T, r, sigma, "put", q=q)
+        parity = S * np.exp(-q * T) - K * np.exp(-r * T)
+        assert abs((c - p) - parity) < 1e-6
+
+    def test_implied_vol_roundtrip_with_dividends(self):
+        q = 0.03
+        p = black_scholes.price(S, K, T, r, sigma, "call", q=q)
+        iv = black_scholes.implied_vol(p, S, K, T, r, "call", q=q)
+        assert abs(iv - sigma) < 1e-5
+
 
 class TestBinomialTree:
     def test_european_call_converges_to_bs(self):

@@ -10,6 +10,7 @@ export interface OptionInputs {
   T: number;
   r: number;
   sigma: number;
+  q: number;
   option_type: OptionType;
 }
 
@@ -108,5 +109,6 @@ export const DEFAULT_INPUTS: OptionInputs = {
   T: 1.0,
   r: 0.05,
   sigma: 0.2,
+  q: 0,
   option_type: "call",
 };

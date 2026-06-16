@@ -2,43 +2,51 @@ import numpy as np
 from scipy.stats import norm
 
 
-def _d1_d2(S: float, K: float, T: float, r: float, sigma: float) -> tuple[float, float]:
-    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+def _d1_d2(S: float, K: float, T: float, r: float, sigma: float, q: float = 0.0) -> tuple[float, float]:
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
     d2 = d1 - sigma * np.sqrt(T)
     return d1, d2
 
 
-def price(S: float, K: float, T: float, r: float, sigma: float, option_type: str) -> float:
-    d1, d2 = _d1_d2(S, K, T, r, sigma)
+def price(S: float, K: float, T: float, r: float, sigma: float, option_type: str, q: float = 0.0) -> float:
+    d1, d2 = _d1_d2(S, K, T, r, sigma, q)
+    disc_q = np.exp(-q * T)
     if option_type == "call":
-        return float(S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2))
-    return float(K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1))
+        return float(S * disc_q * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2))
+    return float(K * np.exp(-r * T) * norm.cdf(-d2) - S * disc_q * norm.cdf(-d1))
 
 
-def greeks(S: float, K: float, T: float, r: float, sigma: float, option_type: str) -> dict:
-    d1, d2 = _d1_d2(S, K, T, r, sigma)
+def greeks(S: float, K: float, T: float, r: float, sigma: float, option_type: str, q: float = 0.0) -> dict:
+    d1, d2 = _d1_d2(S, K, T, r, sigma, q)
     phi = norm.pdf(d1)
     sqrt_T = np.sqrt(T)
     disc = np.exp(-r * T)
+    disc_q = np.exp(-q * T)
 
-    delta = float(norm.cdf(d1) if option_type == "call" else norm.cdf(d1) - 1.0)
-    gamma = float(phi / (S * sigma * sqrt_T))
-    vega = float(S * phi * sqrt_T / 100)  # per 1% move in vol
+    delta = float(disc_q * norm.cdf(d1) if option_type == "call" else disc_q * (norm.cdf(d1) - 1.0))
+    gamma = float(disc_q * phi / (S * sigma * sqrt_T))
+    vega = float(S * disc_q * phi * sqrt_T / 100)  # per 1% move in vol
 
     if option_type == "call":
-        theta = float((-(S * phi * sigma / (2 * sqrt_T)) - r * K * disc * norm.cdf(d2)) / 365)
+        theta = float(
+            (-(S * disc_q * phi * sigma / (2 * sqrt_T)) - r * K * disc * norm.cdf(d2) + q * S * disc_q * norm.cdf(d1))
+            / 365
+        )
         rho = float(K * T * disc * norm.cdf(d2) / 100)
     else:
-        theta = float((-(S * phi * sigma / (2 * sqrt_T)) + r * K * disc * norm.cdf(-d2)) / 365)
+        theta = float(
+            (-(S * disc_q * phi * sigma / (2 * sqrt_T)) + r * K * disc * norm.cdf(-d2) - q * S * disc_q * norm.cdf(-d1))
+            / 365
+        )
         rho = float(-K * T * disc * norm.cdf(-d2) / 100)
 
     return {"delta": delta, "gamma": gamma, "vega": vega, "theta": theta, "rho": rho}
 
 
-def _vega_raw(S: float, K: float, T: float, r: float, sigma: float) -> float:
+def _vega_raw(S: float, K: float, T: float, r: float, sigma: float, q: float = 0.0) -> float:
     """Unscaled vega (∂C/∂σ), used in Newton-Raphson IV solver."""
-    d1, _ = _d1_d2(S, K, T, r, sigma)
-    return float(S * norm.pdf(d1) * np.sqrt(T))
+    d1, _ = _d1_d2(S, K, T, r, sigma, q)
+    return float(S * np.exp(-q * T) * norm.pdf(d1) * np.sqrt(T))
 
 
 def implied_vol(
@@ -48,13 +56,14 @@ def implied_vol(
     T: float,
     r: float,
     option_type: str,
+    q: float = 0.0,
     tol: float = 1e-7,
     max_iter: int = 100,
 ) -> float:
     sigma = 0.2
     for _ in range(max_iter):
-        p = price(S, K, T, r, sigma, option_type)
-        v = _vega_raw(S, K, T, r, sigma)
+        p = price(S, K, T, r, sigma, option_type, q)
+        v = _vega_raw(S, K, T, r, sigma, q)
         diff = p - market_price
         if abs(diff) < tol:
             return sigma

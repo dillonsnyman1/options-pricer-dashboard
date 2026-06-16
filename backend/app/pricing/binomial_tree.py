@@ -9,6 +9,7 @@ def price(
     sigma: float,
     option_type: str,
     n_steps: int = 500,
+    q: float = 0.0,
 ) -> dict:
     """CRR (Cox-Ross-Rubinstein) binomial tree.
 
@@ -18,7 +19,7 @@ def price(
     dt = T / n_steps
     u = float(np.exp(sigma * np.sqrt(dt)))
     d = 1.0 / u
-    p = (np.exp(r * dt) - d) / (u - d)
+    p = (np.exp((r - q) * dt) - d) / (u - d)
     disc = np.exp(-r * dt)
 
     j = np.arange(n_steps + 1)

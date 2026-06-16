@@ -7,13 +7,15 @@ Ordered roughly by effort.
 
 ## In progress
 
-- [ ] **Continuous dividend yield** — Add `q` param to all three pricers (`r → r - q` in BS, binomial, MC drift). Update request model and frontend input. ~50 lines across 5–6 files.
+_Nothing started yet._
 
 ---
 
 ## Backlog
 
 ### Easy
+
+- [ ] **Discrete dividends** — Two approaches: escrowed-dividend (subtract PV of dividends from spot before pricing) or forward-price adjustment. More care needed than continuous yield, especially for the binomial tree where ex-dividend dates fall at specific nodes.
 
 - [ ] **Reference implementation: Julia** — Standalone implementation of all five algorithms in `reference/julia/`, validated against the shared fixtures in `reference/fixtures/`. No changes to the main app.
 
@@ -41,4 +43,4 @@ Ordered roughly by effort.
 
 ## Done
 
-_Nothing completed yet._
+- [x] **Continuous dividend yield** — Added `q` param (Merton model: `r → r - q`) to all three pricers, all request models, and the frontend form. 29/29 tests passing.

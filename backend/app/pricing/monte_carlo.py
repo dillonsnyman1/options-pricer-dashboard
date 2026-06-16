@@ -10,6 +10,7 @@ def price_with_convergence(
     option_type: str,
     path_counts: list[int],
     seed: int = 42,
+    q: float = 0.0,
 ) -> list[dict]:
     """Price the option at each path count in path_counts using antithetic variates.
 
@@ -25,7 +26,7 @@ def price_with_convergence(
     Z_full = np.concatenate([Z, -Z])  # antithetic pairs
 
     disc = np.exp(-r * T)
-    ST = S * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * Z_full)
+    ST = S * np.exp((r - q - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * Z_full)
 
     if option_type == "call":
         payoffs = np.maximum(ST - K, 0.0)
@@ -60,5 +61,6 @@ def price(
     option_type: str,
     n_paths: int = 200_000,
     seed: int = 42,
+    q: float = 0.0,
 ) -> dict:
-    return price_with_convergence(S, K, T, r, sigma, option_type, [n_paths], seed)[0]
+    return price_with_convergence(S, K, T, r, sigma, option_type, [n_paths], seed, q)[0]

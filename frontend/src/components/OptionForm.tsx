@@ -12,6 +12,7 @@ const FIELDS: { key: keyof Omit<OptionInputs, "option_type">; label: string; hin
   { key: "T", label: "Expiry (T)", hint: "Years to expiry", step: 0.1 },
   { key: "r", label: "Rate (r)", hint: "Risk-free rate, e.g. 0.05", step: 0.01 },
   { key: "sigma", label: "Vol (σ)", hint: "Annualised vol, e.g. 0.20", step: 0.01 },
+  { key: "q", label: "Div Yield (q)", hint: "Continuous dividend yield, e.g. 0.02", step: 0.01 },
 ];
 
 export function OptionForm({ inputs, onChange }: Props) {

@@ -21,6 +21,7 @@ class PriceRequest(BaseModel):
     T: float = Field(gt=0, description="Time to expiry in years")
     r: float = Field(description="Risk-free rate, e.g. 0.05 for 5%")
     sigma: float = Field(gt=0, description="Annualised volatility, e.g. 0.20 for 20%")
+    q: float = Field(default=0.0, ge=0.0, description="Continuous dividend yield, e.g. 0.02 for 2%")
     option_type: OptionType
 
 
@@ -64,6 +65,7 @@ class GreeksSensitivityRequest(BaseModel):
     T: float = Field(gt=0)
     r: float
     sigma: float = Field(gt=0)
+    q: float = Field(default=0.0, ge=0.0)
     option_type: OptionType
     vary_param: SensitivityParam
     n_points: int = Field(default=60, ge=10, le=200)
@@ -83,6 +85,7 @@ class IVSmileRequest(BaseModel):
     S: float = Field(gt=0)
     T: float = Field(gt=0)
     r: float
+    q: float = Field(default=0.0, ge=0.0)
     atm_vol: float = Field(gt=0, description="ATM implied volatility")
     skew: float = Field(default=-0.2, description="slope of the vol smile vs. log-moneyness (negative = put skew)")
     curvature: float = Field(default=0.5, ge=0, description="Vol smile curvature")
@@ -104,6 +107,7 @@ class MCConvergenceRequest(BaseModel):
     T: float = Field(gt=0)
     r: float
     sigma: float = Field(gt=0)
+    q: float = Field(default=0.0, ge=0.0)
     option_type: OptionType
 
 
@@ -126,6 +130,7 @@ class PnLHeatmapRequest(BaseModel):
     T: float = Field(gt=0)
     r: float
     sigma: float = Field(gt=0)
+    q: float = Field(default=0.0, ge=0.0)
     option_type: OptionType
 
 

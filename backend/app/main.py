@@ -42,12 +42,12 @@ _BINOMIAL_STEPS = 500
 def price_option(req: PriceRequest) -> PriceResponse:
     opt = req.option_type.value
 
-    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt)
-    bs_g = black_scholes.greeks(req.S, req.K, req.T, req.r, req.sigma, opt)
+    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
+    bs_g = black_scholes.greeks(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
 
-    mc = monte_carlo.price(req.S, req.K, req.T, req.r, req.sigma, opt, _MC_PATHS)
+    mc = monte_carlo.price(req.S, req.K, req.T, req.r, req.sigma, opt, _MC_PATHS, q=req.q)
 
-    bin_ = binomial_tree.price(req.S, req.K, req.T, req.r, req.sigma, opt, _BINOMIAL_STEPS)
+    bin_ = binomial_tree.price(req.S, req.K, req.T, req.r, req.sigma, opt, _BINOMIAL_STEPS, req.q)
 
     return PriceResponse(
         bs=BSResult(price=bs_price, greeks=Greeks(**bs_g)),
@@ -79,8 +79,8 @@ def greeks_sensitivity(req: GreeksSensitivityRequest) -> list[dict]:
     results = []
     for v in values:
         S, K, T, r, sigma = params(float(v))
-        p = black_scholes.price(S, K, T, r, sigma, opt)
-        g = black_scholes.greeks(S, K, T, r, sigma, opt)
+        p = black_scholes.price(S, K, T, r, sigma, opt, req.q)
+        g = black_scholes.greeks(S, K, T, r, sigma, opt, req.q)
         results.append({"param_value": round(float(v), 8), "price": p, **g})
     return results
 
@@ -96,14 +96,14 @@ def iv_smile(req: IVSmileRequest) -> list[IVSmilePoint]:
         m = float(np.log(K / req.S))
         vol = max(0.005, req.atm_vol + req.skew * m + req.curvature * m**2)
 
-        call_p = black_scholes.price(req.S, float(K), req.T, req.r, vol, "call")
-        put_p = black_scholes.price(req.S, float(K), req.T, req.r, vol, "put")
+        call_p = black_scholes.price(req.S, float(K), req.T, req.r, vol, "call", req.q)
+        put_p = black_scholes.price(req.S, float(K), req.T, req.r, vol, "put", req.q)
 
         # Back out IV from OTM option price (more numerically stable near ATM)
         if K <= req.S:
-            iv = black_scholes.implied_vol(put_p, req.S, float(K), req.T, req.r, "put")
+            iv = black_scholes.implied_vol(put_p, req.S, float(K), req.T, req.r, "put", req.q)
         else:
-            iv = black_scholes.implied_vol(call_p, req.S, float(K), req.T, req.r, "call")
+            iv = black_scholes.implied_vol(call_p, req.S, float(K), req.T, req.r, "call", req.q)
 
         results.append(
             IVSmilePoint(
@@ -120,9 +120,9 @@ def iv_smile(req: IVSmileRequest) -> list[IVSmilePoint]:
 @app.post("/api/mc-convergence", response_model=MCConvergenceResponse)
 def mc_convergence(req: MCConvergenceRequest) -> MCConvergenceResponse:
     opt = req.option_type.value
-    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt)
+    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
     paths_data = monte_carlo.price_with_convergence(
-        req.S, req.K, req.T, req.r, req.sigma, opt, _MC_CONVERGENCE_STEPS
+        req.S, req.K, req.T, req.r, req.sigma, opt, _MC_CONVERGENCE_STEPS, q=req.q
     )
     return MCConvergenceResponse(
         bs_price=bs_price,
@@ -133,7 +133,7 @@ def mc_convergence(req: MCConvergenceRequest) -> MCConvergenceResponse:
 @app.post("/api/pnl-heatmap", response_model=PnLHeatmapResponse)
 def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
     opt = req.option_type.value
-    current_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt)
+    current_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
 
     spots = np.linspace(req.S * 0.6, req.S * 1.4, 20)
     vols = np.linspace(max(0.05, req.sigma * 0.4), req.sigma * 2.5, 20)
@@ -141,7 +141,7 @@ def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
     pnl: list[list[float]] = []
     for vol in vols:
         row = [
-            round(black_scholes.price(float(s), req.K, req.T, req.r, float(vol), opt) - current_price, 4)
+            round(black_scholes.price(float(s), req.K, req.T, req.r, float(vol), opt, req.q) - current_price, 4)
             for s in spots
         ]
         pnl.append(row)
