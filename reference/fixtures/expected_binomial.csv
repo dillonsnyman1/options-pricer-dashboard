@@ -1,0 +1,6 @@
+case_id,european_price,american_price,n_steps,notes
+1,10.440591,10.440591,200,no early exercise premium for call (non-dividend-paying)
+2,5.563534,6.086383,200,early exercise premium = 0.522849
+3,4.226313,4.226313,200,no early exercise premium for OTM call
+4,2.216490,2.282818,200,small early exercise premium for OTM put
+5,25.297561,30.000000,200,immediate exercise worth max (intrinsic = 30.0)

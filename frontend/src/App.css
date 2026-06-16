@@ -1,0 +1,431 @@
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.app-header {
+  margin-bottom: 28px;
+}
+
+.app-header h1 {
+  margin: 0 0 12px;
+  font-size: 32px;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.header-tagline {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0 0 10px !important;
+}
+
+.header-background {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.75;
+  max-width: 820px;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+/* ── Option input form ───────────────────────────────────────────────────── */
+
+.option-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.form-field input[type="number"] {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-h);
+  width: 100px;
+}
+
+.form-field-hint {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+}
+
+.type-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.type-option {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-h);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.type-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.type-option:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.type-option.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.apply-button {
+  padding: 7px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.apply-button:hover {
+  opacity: 0.88;
+}
+
+/* ── Summary cards ───────────────────────────────────────────────────────── */
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--accent);
+}
+
+.summary-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.summary-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-card-subvalue {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* ── Explore guide ───────────────────────────────────────────────────────── */
+
+.explore-guide {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.explore-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.explore-tips {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.explore-tips li {
+  margin-bottom: 3px;
+}
+
+.explore-tips li:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Tab navigation ──────────────────────────────────────────────────────── */
+
+.tab-nav {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.tab-button {
+  padding: 9px 20px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: var(--accent);
+}
+
+.tab-button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-content {
+  animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Chart cards ─────────────────────────────────────────────────────────── */
+
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.chart-card.wide {
+  margin-bottom: 24px;
+}
+
+.chart-card h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.chart-subtitle {
+  font-size: 13px;
+  color: var(--text);
+  margin: 0 0 18px;
+  line-height: 1.65;
+}
+
+.chart-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.chart-loading,
+.chart-error {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--text);
+}
+
+.chart-error {
+  color: #b91c1c;
+}
+
+/* ── Chart controls (vary param / greek toggles) ─────────────────────────── */
+
+.chart-controls {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.toggle-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  font-size: 13px;
+  color: var(--text-h);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.toggle-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.toggle-btn:hover:not(.active) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Greeks table ────────────────────────────────────────────────────────── */
+
+.greeks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.greeks-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.greeks-table td {
+  padding: 9px 12px;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.greek-name {
+  font-weight: 600;
+  color: var(--text-h);
+  white-space: nowrap;
+}
+
+.greek-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 14px;
+}
+
+.greek-desc {
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── IV Smile sliders ────────────────────────────────────────────────────── */
+
+input[type="range"] {
+  accent-color: var(--accent);
+  width: 180px;
+  cursor: pointer;
+}
+
+/* ── P&L Heatmap ─────────────────────────────────────────────────────────── */
+
+.heatmap-scroll {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+/* ── Status messages ─────────────────────────────────────────────────────── */
+
+.status-message {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--text);
+}
+
+.status-message.error {
+  color: #b91c1c;
+}
