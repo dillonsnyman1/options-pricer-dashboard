@@ -57,23 +57,25 @@ Inputs: `S` (spot), `K` (strike), `T` (time to expiry in years), `r` (risk-free 
 ### 1. Black-Scholes (analytical)
 
 Black-Scholes assumes lognormal returns, constant volatility, continuous trading, and
-no dividends or transaction costs. Under those assumptions it gives a closed-form price
-and exact Greeks, which is why it became the market standard despite everyone knowing the
-assumptions are wrong in practice.
+no transaction costs. This implementation extends vanilla BS with a continuous dividend
+yield via the Merton (1973) adjustment (r → r − q), which is why q appears in the
+formulas below. Under those assumptions it gives a closed-form price and exact Greeks,
+which is why it became the market standard despite everyone knowing the assumptions are
+wrong in practice.
 
 ```
-d1 = [ln(S/K) + (r + sigma^2/2)*T] / (sigma*sqrt(T))
+d1 = [ln(S/K) + (r - q + sigma^2/2)*T] / (sigma*sqrt(T))
 d2 = d1 - sigma*sqrt(T)
 
-Call = S*N(d1) - K*exp(-r*T)*N(d2)
-Put  = K*exp(-r*T)*N(-d2) - S*N(-d1)
+Call = S*exp(-q*T)*N(d1) - K*exp(-r*T)*N(d2)
+Put  = K*exp(-r*T)*N(-d2) - S*exp(-q*T)*N(-d1)
 ```
 
 The main limitation is the constant-vol assumption. If BS were correct, implied volatility
-would be flat across strikes. The fact that it isn't (the vol smile) is the market's way of
-saying the lognormal distribution underweights tail events. Practitioners still use BS
-extensively, but they quote options in implied vol terms and track the smile to measure
-where the model is wrong.
+would be flat across strikes. The vol smile — the fact that it isn't — reflects return
+distributions with fatter tails and more skew than lognormal assumes. Practitioners still
+use BS extensively, but they quote options in implied vol terms and track the smile to
+measure where the model is wrong.
 
 #### Greeks
 
@@ -82,9 +84,9 @@ so the numbers are in the same ballpark as the price.
 
 | Greek  | Formula | Scaling |
 |--------|---------|---------|
-| Delta  | N(d1) for call, N(d1)-1 for put | n/a |
-| Gamma  | N'(d1) / (S*sigma*sqrt(T)) | n/a |
-| Vega   | S*N'(d1)*sqrt(T) | per 1% move in sigma |
+| Delta  | exp(-q*T)*N(d1) for call, exp(-q*T)*(N(d1)-1) for put | n/a |
+| Gamma  | exp(-q*T)*N'(d1) / (S*sigma*sqrt(T)) | n/a |
+| Vega   | S*exp(-q*T)*N'(d1)*sqrt(T) | per 1% move in sigma |
 | Theta  | -[S*N'(d1)*sigma/(2*sqrt(T)) +/- r*K*exp(-rT)*N(+/-d2)] | per calendar day |
 | Rho    | +/-K*T*exp(-rT)*N(+/-d2) | per 1% move in r |
 
@@ -98,7 +100,7 @@ baseline to understand the method before extending it.
 
 ```
 Z ~ N(0,1)  (half the paths, rest are -Z)
-ST = S * exp[(r - sigma^2/2)*T + sigma*sqrt(T)*Z]
+ST = S * exp[(r - q - sigma^2/2)*T + sigma*sqrt(T)*Z]
 Price = exp(-r*T) * E[max(ST - K, 0)]
 ```
 
@@ -119,7 +121,7 @@ every point in time whether early exercise is worth more than continuation, whic
 exactly what backward induction on a tree does.
 
 ```
-u = exp(sigma*sqrt(dt)),   d = 1/u,   p = (exp(r*dt) - d) / (u - d)
+u = exp(sigma*sqrt(dt)),   d = 1/u,   p = (exp((r-q)*dt) - d) / (u - d)
 ```
 
 The 500-step CRR tree runs two backward inductions in a single pass: one with no
@@ -164,10 +166,10 @@ hold in a production pricing library:
   parametric smile here is a toy stand-in; a real system would calibrate to
   actual market quotes and enforce no-arbitrage constraints across the surface.
 
-- **No dividends.** The model assumes a non-dividend-paying stock. Adding a
-  continuous dividend yield `q` is straightforward (replace `r` with `r - q` in
-  the BS formula), but discrete dividends require more care - either the
-  escrowed-dividend or forward-price adjustment approach.
+- **Discrete dividends.** Continuous dividend yield `q` is supported via the Merton
+  adjustment (r → r − q in d1 and the risk-neutral drift). Discrete dividends require
+  more care — either the escrowed-dividend or forward-price adjustment approach, as
+  ex-dividend dates fall at specific nodes in the binomial tree.
 
 - **No term structure.** Each pricing request takes a single expiry. A real vol
   surface has a term structure: different implied vol levels and smile shapes at
