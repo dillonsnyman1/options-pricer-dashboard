@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { pnlHeatmap } from "../api/client";
 import type { OptionInputs, PnLHeatmapResponse } from "../types/options";
 
@@ -20,18 +20,68 @@ export function PnLHeatmap({ inputs }: Props) {
   const [data, setData] = useState<PnLHeatmapResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [spotRangePct, setSpotRangePct] = useState(0.4);
+  const [volRangeMult, setVolRangeMult] = useState(2.5);
+  const spotRangeRef = useRef(spotRangePct);
+  const volRangeRef = useRef(volRangeMult);
 
-  useEffect(() => {
+  function load(spot: number, vol: number) {
     setLoading(true);
     setError(null);
-    pnlHeatmap(inputs)
+    pnlHeatmap(inputs, spot, vol)
       .then(setData)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load heatmap."))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    load(spotRangeRef.current, volRangeRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputs]);
 
-  if (loading) return <div className="chart-card wide"><div className="chart-loading">Loading P&amp;L heatmap...</div></div>;
-  if (error) return <div className="chart-card wide"><div className="chart-error">{error}</div></div>;
+  function handleSpotRangeCommit() {
+    spotRangeRef.current = spotRangePct;
+    load(spotRangePct, volRangeRef.current);
+  }
+
+  function handleVolRangeCommit() {
+    volRangeRef.current = volRangeMult;
+    load(spotRangeRef.current, volRangeMult);
+  }
+
+  const controls = (
+    <div className="chart-controls">
+      <div className="control-group">
+        <span className="control-label">Spot range: ±{(spotRangePct * 100).toFixed(0)}%</span>
+        <input
+          type="range"
+          min="0.1"
+          max="0.8"
+          step="0.05"
+          value={spotRangePct}
+          onChange={(e) => setSpotRangePct(Number(e.target.value))}
+          onMouseUp={handleSpotRangeCommit}
+          onTouchEnd={handleSpotRangeCommit}
+        />
+      </div>
+      <div className="control-group">
+        <span className="control-label">Vol range: ×{volRangeMult.toFixed(1)}</span>
+        <input
+          type="range"
+          min="1.25"
+          max="5"
+          step="0.25"
+          value={volRangeMult}
+          onChange={(e) => setVolRangeMult(Number(e.target.value))}
+          onMouseUp={handleVolRangeCommit}
+          onTouchEnd={handleVolRangeCommit}
+        />
+      </div>
+    </div>
+  );
+
+  if (loading) return <div className="chart-card wide">{controls}<div className="chart-loading">Loading P&amp;L heatmap...</div></div>;
+  if (error) return <div className="chart-card wide">{controls}<div className="chart-error">{error}</div></div>;
   if (!data) return null;
 
   const allPnl = data.pnl.flat();
@@ -49,6 +99,7 @@ export function PnLHeatmap({ inputs }: Props) {
   return (
     <div className="chart-card wide">
       <h3>P&amp;L Heatmap: Option Price Change vs. Today</h3>
+      {controls}
       <p className="chart-subtitle">
         Green = gain vs. today&rsquo;s price (${data.current_price.toFixed(4)}). Red = loss.
         Rows: volatility (bottom = low, top = high). Columns: spot price (left = low, right = high).

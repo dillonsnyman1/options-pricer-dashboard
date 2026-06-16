@@ -12,6 +12,8 @@ export interface OptionInputs {
   sigma: number;
   q: number;
   option_type: OptionType;
+  n_paths: number;
+  n_steps: number;
 }
 
 export interface Greeks {
@@ -111,4 +113,6 @@ export const DEFAULT_INPUTS: OptionInputs = {
   sigma: 0.2,
   q: 0,
   option_type: "call",
+  n_paths: 200_000,
+  n_steps: 500,
 };

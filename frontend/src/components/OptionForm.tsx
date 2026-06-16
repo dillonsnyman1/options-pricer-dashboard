@@ -13,6 +13,8 @@ const FIELDS: { key: keyof Omit<OptionInputs, "option_type">; label: string; hin
   { key: "r", label: "Rate (r)", hint: "Risk-free rate, e.g. 0.05", step: 0.01 },
   { key: "sigma", label: "Vol (σ)", hint: "Annualised vol, e.g. 0.20", step: 0.01 },
   { key: "q", label: "Div Yield (q)", hint: "Continuous dividend yield, e.g. 0.02", step: 0.01 },
+  { key: "n_paths", label: "MC Paths", hint: "Simulation paths, e.g. 200000", step: 1000 },
+  { key: "n_steps", label: "Binomial Steps", hint: "Tree steps, e.g. 500", step: 50 },
 ];
 
 export function OptionForm({ inputs, onChange }: Props) {

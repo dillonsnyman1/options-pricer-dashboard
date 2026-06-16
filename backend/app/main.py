@@ -33,9 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_MC_PATHS = 200_000
 _MC_CONVERGENCE_STEPS = [100, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 200_000]
-_BINOMIAL_STEPS = 500
 
 
 @app.post("/api/price", response_model=PriceResponse)
@@ -45,9 +43,9 @@ def price_option(req: PriceRequest) -> PriceResponse:
     bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
     bs_g = black_scholes.greeks(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
 
-    mc = monte_carlo.price(req.S, req.K, req.T, req.r, req.sigma, opt, _MC_PATHS, q=req.q)
+    mc = monte_carlo.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.n_paths, q=req.q)
 
-    bin_ = binomial_tree.price(req.S, req.K, req.T, req.r, req.sigma, opt, _BINOMIAL_STEPS, req.q)
+    bin_ = binomial_tree.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.n_steps, req.q)
 
     return PriceResponse(
         bs=BSResult(price=bs_price, greeks=Greeks(**bs_g)),
@@ -135,8 +133,8 @@ def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
     opt = req.option_type.value
     current_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
 
-    spots = np.linspace(req.S * 0.6, req.S * 1.4, 20)
-    vols = np.linspace(max(0.05, req.sigma * 0.4), req.sigma * 2.5, 20)
+    spots = np.linspace(req.S * (1 - req.spot_range_pct), req.S * (1 + req.spot_range_pct), 20)
+    vols = np.linspace(max(0.05, req.sigma / req.vol_range_mult), req.sigma * req.vol_range_mult, 20)
 
     pnl: list[list[float]] = []
     for vol in vols:

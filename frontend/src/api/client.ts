@@ -58,6 +58,14 @@ export function mcConvergence(inputs: OptionInputs): Promise<MCConvergenceRespon
   return post<MCConvergenceResponse>("/api/mc-convergence", inputs);
 }
 
-export function pnlHeatmap(inputs: OptionInputs): Promise<PnLHeatmapResponse> {
-  return post<PnLHeatmapResponse>("/api/pnl-heatmap", inputs);
+export function pnlHeatmap(
+  inputs: OptionInputs,
+  spotRangePct = 0.4,
+  volRangeMult = 2.5,
+): Promise<PnLHeatmapResponse> {
+  return post<PnLHeatmapResponse>("/api/pnl-heatmap", {
+    ...inputs,
+    spot_range_pct: spotRangePct,
+    vol_range_mult: volRangeMult,
+  });
 }
