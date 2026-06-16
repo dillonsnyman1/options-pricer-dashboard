@@ -76,10 +76,11 @@ jobs:
         with:
           r-version: release
 
-      - run: Rscript -e "install.packages('testthat', repos='https://cloud.r-project.org')"
-
-      - run: Rscript test_options.R
+      - name: Install dependencies and run tests
         working-directory: reference/r
+        run: |
+          Rscript -e "install.packages('testthat', repos='https://cloud.r-project.org')"
+          Rscript test_options.R
 
   reference-cpp:
     name: Reference (C++)
