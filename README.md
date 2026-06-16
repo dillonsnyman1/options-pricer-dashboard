@@ -9,22 +9,9 @@ P&L scenario heatmap.
 - **Backend**: Python + FastAPI for the pricing engines
 - **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile, Monte Carlo, P&L heatmap)
 
-> **Live demo**: [placeholder]
+> **Live demo**: [d10ls11pbsolux.cloudfront.net](https://d10ls11pbsolux.cloudfront.net) - try adjusting the option parameters, switching pricing methods, or exploring the Greeks sensitivity and IV smile tabs.
 >
-> A few things worth trying:
-> - Switch to a **put** and move the strike deep in the money - the binomial American
->   price will start to diverge from the European price as early exercise becomes
->   attractive. The gap is the early exercise premium.
-> - On the **IV smile** tab, drag the skew slider negative to replicate the typical
->   equity put skew, then increase curvature to layer a symmetric smile on top.
-> - The **Monte Carlo** tab shows the 95% confidence interval collapsing as path
->   count increases. At 100 paths the estimate is noisy; by 200k it's within a cent
->   of the Black-Scholes price.
-> - The **P&L heatmap** gives a quick scenario view: pick a position, then see what
->   happens across a grid of spot moves and vol shocks simultaneously.
->
-> The backend is fully stateless: all pricing happens in-request with no database or
-> storage of any kind.
+> The backend is fully stateless: all pricing is done in-request with no database or storage of any kind.
 
 > **Disclaimer**: Simplified demo built for portfolio purposes. Not a production pricing
 > library and should not be used for live trading. All defaults are synthetic.
