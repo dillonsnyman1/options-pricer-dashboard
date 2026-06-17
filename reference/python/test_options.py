@@ -17,7 +17,7 @@ import sys
 import pytest
 
 sys.path.insert(0, os.path.dirname(__file__))
-from options import binomial_tree, bs_greeks, bs_price, implied_vol, monte_carlo
+from options import barrier_mc, binomial_tree, bs_greeks, bs_price, implied_vol, monte_carlo
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "..", "fixtures")
 
@@ -175,4 +175,40 @@ class TestMonteCarlo:
         args = (100, 100, 1.0, 0.05, 0.20, "call")
         r1 = monte_carlo(*args, n_paths=1000, seed=7)
         r2 = monte_carlo(*args, n_paths=1000, seed=7)
+        assert r1["price"] == r2["price"]
+
+
+class TestBarrierMC:
+    S, K, T, r, sigma = 100.0, 100.0, 1.0, 0.05, 0.20
+
+    def test_knock_out_le_vanilla(self):
+        vanilla = bs_price(self.S, self.K, self.T, self.r, self.sigma, "call")
+        b = barrier_mc(self.S, self.K, self.T, self.r, self.sigma, "call",
+                       barrier=85, barrier_type="down_and_out", n_paths=50_000)
+        assert b["price"] <= vanilla + 3 * b["std_error"]
+
+    def test_in_out_parity(self):
+        args = (self.S, self.K, self.T, self.r, self.sigma, "call")
+        vanilla = bs_price(*args)
+        b_out = barrier_mc(*args, barrier=85, barrier_type="down_and_out", n_paths=50_000, seed=42)
+        b_in = barrier_mc(*args, barrier=85, barrier_type="down_and_in", n_paths=50_000, seed=42)
+        assert abs((b_out["price"] + b_in["price"]) - vanilla) < 0.5
+
+    def test_far_barrier_approaches_vanilla(self):
+        vanilla = bs_price(self.S, self.K, self.T, self.r, self.sigma, "call")
+        b = barrier_mc(self.S, self.K, self.T, self.r, self.sigma, "call",
+                       barrier=10, barrier_type="down_and_out", n_paths=50_000)
+        assert abs(b["price"] - vanilla) < 3 * b["std_error"]
+
+    def test_up_and_out_near_spot_is_cheap(self):
+        vanilla = bs_price(self.S, self.K, self.T, self.r, self.sigma, "call")
+        b = barrier_mc(self.S, self.K, self.T, self.r, self.sigma, "call",
+                       barrier=self.S * 1.02, barrier_type="up_and_out", n_paths=50_000)
+        assert b["price"] < vanilla * 0.1
+        assert b["barrier_hit_pct"] > 80.0
+
+    def test_seed_reproducible(self):
+        args = (self.S, self.K, self.T, self.r, self.sigma, "call")
+        r1 = barrier_mc(*args, barrier=85, barrier_type="down_and_out", n_paths=1000, seed=7)
+        r2 = barrier_mc(*args, barrier=85, barrier_type="down_and_out", n_paths=1000, seed=7)
         assert r1["price"] == r2["price"]

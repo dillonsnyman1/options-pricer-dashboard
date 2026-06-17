@@ -2,12 +2,12 @@
 
 [![CI/CD](https://github.com/dillonsnyman1/options-pricer-dashboard/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dillonsnyman1/options-pricer-dashboard/actions/workflows/ci-cd.yml)
 
-A full-stack demo that prices European and American options using three methods and
-shows the full Greeks, implied volatility smile, Monte Carlo convergence, and a
-P&L scenario heatmap.
+A full-stack demo that prices European, American, and barrier options using three
+methods and shows the full Greeks, implied volatility smile, Monte Carlo
+convergence, barrier option path simulation, and a P&L scenario heatmap.
 
 - **Backend**: Python + FastAPI for the pricing engines
-- **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile, Monte Carlo, P&L heatmap)
+- **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile, Monte Carlo, barrier options, P&L heatmap)
 
 > **Live demo**: [d10ls11pbsolux.cloudfront.net](https://d10ls11pbsolux.cloudfront.net) - try adjusting the option parameters, switching pricing methods, or exploring the Greeks sensitivity and IV smile tabs.
 >
@@ -150,6 +150,34 @@ adds a symmetric "smile" on top of the skew, reflecting fat-tail risk in both di
 The IV smile tab generates prices from this surface then backs out the IVs via the
 Newton-Raphson solver, so what you see is the round-trip: parametric vol -> price -> implied vol.
 
+### 5. Barrier Options (Monte Carlo)
+
+Barrier options are path-dependent: they knock in (activate) or knock out (expire
+worthless) when the underlying hits a specified barrier level during the option's
+life. Four variants are supported:
+
+| Type | Condition |
+|------|-----------|
+| Down-and-out | Expires worthless if spot falls to or below barrier |
+| Down-and-in | Activates only if spot falls to or below barrier |
+| Up-and-out | Expires worthless if spot rises to or at/above barrier |
+| Up-and-in | Activates only if spot rises to or at/above barrier |
+
+Black-Scholes has no simple closed form for barrier options, which is why they are
+priced via Monte Carlo. The simulation generates full price paths step-by-step
+(default 252 steps, roughly daily monitoring), tracks the running minimum or
+maximum along each path, and applies the barrier condition to the terminal payoff.
+Antithetic variates are used for variance reduction, as with the vanilla MC engine.
+
+The barrier options tab shows the MC price alongside the vanilla BS price so the
+"barrier discount" is visible, the percentage of paths that hit the barrier, and
+a sample of 20 simulated paths colour-coded by whether they breached the barrier.
+
+Note that the MC simulation uses discrete monitoring (checking the barrier at each
+time step), which is an approximation of continuous monitoring. In practice the
+discrete price converges to the continuous price as the number of monitoring steps
+increases.
+
 ---
 
 ## Known limitations and possible extensions
@@ -196,12 +224,11 @@ static arbitrage. SABR is more common in rates and FX. Either would replace the
 toy `sigma_ATM + skew*m + curvature*m^2` used here with a properly calibrated
 surface.
 
-**Exotic options (barriers, Asians)**
-Knock-in / knock-out barriers and Asian (average-price) options are
-path-dependent, so Black-Scholes has no simple closed form. They are a natural
-Monte Carlo extension: the same simulation engine handles them by recording the
-path, not just the terminal value. Barriers also have partial analytical
-solutions under GBM that serve as useful checks.
+**Exotic options: Asians**
+Asian (average-price) options are path-dependent, so Black-Scholes has no simple
+closed form. They are a natural Monte Carlo extension: the simulation records the
+running average along each path instead of just the terminal value. (Barrier
+options are already implemented — see section 5 above.)
 
 **Real market data**
 Connecting to a live data source (e.g. CBOE for options chains, Yahoo Finance

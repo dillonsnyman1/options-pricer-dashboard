@@ -1,6 +1,7 @@
 """
 Black-Scholes option pricing, Greeks, Newton-Raphson IV solver,
-Monte Carlo with antithetic variates, and CRR binomial tree.
+Monte Carlo with antithetic variates, CRR binomial tree, and
+barrier option pricing via Monte Carlo.
 
 No external dependencies - uses math.erf for the normal CDF and
 random.gauss for Monte Carlo draws.
@@ -173,4 +174,75 @@ def binomial_tree(
         "european_price": eur,
         "american_price": am,
         "early_exercise_premium": am - eur,
+    }
+
+
+def barrier_mc(
+    S: float,
+    K: float,
+    T: float,
+    r: float,
+    sigma: float,
+    option_type: str,
+    barrier: float,
+    barrier_type: str,
+    n_paths: int = 100_000,
+    n_steps: int = 252,
+    seed: int = 42,
+) -> dict:
+    """
+    Monte Carlo barrier option pricing with antithetic variates and discrete monitoring.
+
+    Simulates full paths step-by-step, tracking whether the barrier is
+    breached. Supports four barrier types:
+      down_and_out, down_and_in, up_and_out, up_and_in
+    """
+    rng = random.Random(seed)
+    half = n_paths // 2
+    dt = T / n_steps
+    drift = (r - 0.5 * sigma ** 2) * dt
+    vol_dt = sigma * math.sqrt(dt)
+    disc = math.exp(-r * T)
+
+    is_down = barrier_type.startswith("down")
+    is_out = barrier_type.endswith("out")
+
+    payoffs = []
+    hits = 0
+
+    for _ in range(half):
+        draws = [rng.gauss(0.0, 1.0) for _ in range(n_steps)]
+
+        for sign in (1.0, -1.0):
+            s = S
+            hit = False
+            for z in draws:
+                s *= math.exp(drift + vol_dt * sign * z)
+                if is_down and s <= barrier:
+                    hit = True
+                elif not is_down and s >= barrier:
+                    hit = True
+
+            if hit:
+                hits += 1
+
+            pf = max(s - K, 0.0) if option_type == "call" else max(K - s, 0.0)
+
+            if is_out:
+                pf = 0.0 if hit else pf
+            else:
+                pf = pf if hit else 0.0
+
+            payoffs.append(disc * pf)
+
+    n = len(payoffs)
+    mean = sum(payoffs) / n
+    variance = sum((p - mean) ** 2 for p in payoffs) / (n - 1)
+    std_error = math.sqrt(variance / n)
+
+    return {
+        "price": mean,
+        "std_error": std_error,
+        "n_paths": n_paths,
+        "barrier_hit_pct": hits / n * 100,
     }

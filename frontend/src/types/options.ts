@@ -94,6 +94,33 @@ export interface PnLHeatmapResponse {
   current_price: number;
 }
 
+export type BarrierType = "down_and_out" | "down_and_in" | "up_and_out" | "up_and_in";
+
+export interface SamplePath {
+  prices: number[];
+  barrier_hit: boolean;
+}
+
+export interface BarrierPriceResponse {
+  mc_price: number;
+  mc_std_error: number;
+  mc_confidence_lower: number;
+  mc_confidence_upper: number;
+  vanilla_price: number;
+  barrier_hit_pct: number;
+  n_paths: number;
+  n_monitoring_steps: number;
+  time_points: number[];
+  sample_paths: SamplePath[];
+}
+
+export const BARRIER_TYPE_LABELS: Record<BarrierType, string> = {
+  down_and_out: "Down-and-Out",
+  down_and_in: "Down-and-In",
+  up_and_out: "Up-and-Out",
+  up_and_in: "Up-and-In",
+};
+
 export const SENSITIVITY_PARAM_LABELS: Record<SensitivityParam, string> = {
   spot: "Spot Price",
   vol: "Volatility",

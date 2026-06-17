@@ -8,7 +8,7 @@ languages, each free of external dependencies:
 - [`cpp/`](cpp/) - C++17, header-only (`options.hpp`), no external libraries
 - [`matlab/`](matlab/) - no toolboxes required (`erf` replaces `normcdf`)
 
-All four implement the same five algorithms:
+All four implement the same five core algorithms:
 
 | Algorithm | Notes |
 |-----------|-------|
@@ -17,6 +17,10 @@ All four implement the same five algorithms:
 | `implied_vol` | Newton-Raphson: iterate sigma until BS(sigma) = market price |
 | `monte_carlo` | Risk-neutral simulation with antithetic variates (Z and -Z pairs) |
 | `binomial_tree` | CRR backward induction, returns European and American prices in one pass |
+
+The Python reference also includes `barrier_mc` (path-dependent barrier option
+pricing via Monte Carlo with discrete monitoring). Adding this to R, C++, and
+MATLAB is tracked as a follow-up.
 
 Python, R, and C++ are validated against the fixtures in [`fixtures/`](fixtures/)
 as part of automated CI. MATLAB uses the same fixtures but is validated manually

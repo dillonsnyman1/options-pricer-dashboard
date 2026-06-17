@@ -1,4 +1,6 @@
 import type {
+  BarrierPriceResponse,
+  BarrierType,
   IVSmilePoint,
   MCConvergenceResponse,
   OptionInputs,
@@ -56,6 +58,22 @@ export function ivSmile(
 
 export function mcConvergence(inputs: OptionInputs): Promise<MCConvergenceResponse> {
   return post<MCConvergenceResponse>("/api/mc-convergence", inputs);
+}
+
+export function barrierPrice(
+  inputs: OptionInputs,
+  barrierLevel: number,
+  barrierType: BarrierType,
+  nSteps = 252,
+  nSamplePaths = 20,
+): Promise<BarrierPriceResponse> {
+  return post<BarrierPriceResponse>("/api/barrier-price", {
+    ...inputs,
+    barrier: barrierLevel,
+    barrier_type: barrierType,
+    n_steps: nSteps,
+    n_sample_paths: nSamplePaths,
+  });
 }
 
 export function pnlHeatmap(

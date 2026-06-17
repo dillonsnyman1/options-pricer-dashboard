@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { priceOption } from "./api/client";
+import { BarrierChart } from "./components/BarrierChart";
 import { GreeksPanel } from "./components/GreeksPanel";
 import { GreeksSensitivityChart } from "./components/GreeksSensitivityChart";
 import { IVSmileChart } from "./components/IVSmileChart";
@@ -11,7 +12,7 @@ import { PnLHeatmap } from "./components/PnLHeatmap";
 import { PriceResultPanel } from "./components/PriceResultPanel";
 import { DEFAULT_INPUTS, type OptionInputs, type PriceResponse } from "./types/options";
 
-type Tab = "pricer" | "greeks" | "iv-smile" | "monte-carlo" | "pnl";
+type Tab = "pricer" | "greeks" | "iv-smile" | "monte-carlo" | "pnl" | "exotics";
 
 const TAB_LABELS: [Tab, string][] = [
   ["pricer", "Pricer"],
@@ -19,6 +20,7 @@ const TAB_LABELS: [Tab, string][] = [
   ["iv-smile", "IV Smile"],
   ["monte-carlo", "Monte Carlo"],
   ["pnl", "P&L Heatmap"],
+  ["exotics", "Barrier Options"],
 ];
 
 function App() {
@@ -109,6 +111,7 @@ function App() {
             {activeTab === "iv-smile" && <IVSmileChart inputs={inputs} />}
             {activeTab === "monte-carlo" && <MCConvergenceChart inputs={inputs} />}
             {activeTab === "pnl" && <PnLHeatmap inputs={inputs} />}
+            {activeTab === "exotics" && <BarrierChart inputs={inputs} />}
           </div>
         </>
       )}

@@ -152,3 +152,43 @@ class PnLHeatmapResponse(BaseModel):
     vols: list[float]
     pnl: list[list[float]]
     current_price: float
+
+
+class BarrierType(str, Enum):
+    down_and_out = "down_and_out"
+    down_and_in = "down_and_in"
+    up_and_out = "up_and_out"
+    up_and_in = "up_and_in"
+
+
+class BarrierPriceRequest(BaseModel):
+    S: float = Field(gt=0)
+    K: float = Field(gt=0)
+    T: float = Field(gt=0)
+    r: float
+    sigma: float = Field(gt=0)
+    q: float = Field(default=0.0, ge=0.0)
+    option_type: OptionType
+    barrier: float = Field(gt=0, description="Barrier level")
+    barrier_type: BarrierType
+    n_paths: int = Field(default=200_000, ge=1_000, le=500_000)
+    n_steps: int = Field(default=252, ge=50, le=1000, description="Monitoring steps (252 ≈ daily)")
+    n_sample_paths: int = Field(default=20, ge=5, le=50, description="Sample paths for visualisation")
+
+
+class SamplePath(BaseModel):
+    prices: list[float]
+    barrier_hit: bool
+
+
+class BarrierPriceResponse(BaseModel):
+    mc_price: float
+    mc_std_error: float
+    mc_confidence_lower: float
+    mc_confidence_upper: float
+    vanilla_price: float
+    barrier_hit_pct: float
+    n_paths: int
+    n_monitoring_steps: int
+    time_points: list[float]
+    sample_paths: list[SamplePath]

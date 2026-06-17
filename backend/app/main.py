@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import (
+    BarrierPriceRequest,
+    BarrierPriceResponse,
     BinomialResult,
     BSResult,
     Greeks,
@@ -19,8 +21,9 @@ from app.models import (
     PnLHeatmapResponse,
     PriceRequest,
     PriceResponse,
+    SamplePath,
 )
-from app.pricing import binomial_tree, black_scholes, monte_carlo
+from app.pricing import barrier, binomial_tree, black_scholes, monte_carlo
 
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
 
@@ -153,6 +156,22 @@ def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
         vols=[round(float(v), 6) for v in vols],
         pnl=pnl,
         current_price=round(current_price, 6),
+    )
+
+
+@app.post("/api/barrier-price", response_model=BarrierPriceResponse)
+def barrier_price(req: BarrierPriceRequest) -> BarrierPriceResponse:
+    opt = req.option_type.value
+    vanilla = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
+    mc = barrier.price_barrier_mc(
+        req.S, req.K, req.T, req.r, req.sigma, opt,
+        req.barrier, req.barrier_type.value,
+        q=req.q, n_paths=req.n_paths, n_steps=req.n_steps, n_sample_paths=req.n_sample_paths,
+    )
+    return BarrierPriceResponse(
+        vanilla_price=round(vanilla, 6),
+        sample_paths=[SamplePath(**p) for p in mc.pop("sample_paths")],
+        **mc,
     )
 
 

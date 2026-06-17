@@ -7,7 +7,11 @@ Ordered roughly by effort.
 
 ## In progress
 
-_Nothing started yet._
+- [ ] **Reference: barrier_mc** — Port barrier MC to all reference languages and add fixture validation.
+  - [x] Python
+  - [ ] R
+  - [ ] C++
+  - [ ] MATLAB
 
 ---
 
@@ -22,8 +26,6 @@ _Nothing started yet._
 ### Medium
 
 - [ ] **Portfolio / book mode** — New API endpoint accepting a list of positions; aggregate net delta, gamma, vega, and combined P&L heatmap. Requires a position builder UI in the frontend.
-
-- [ ] **Exotic options: barriers** — Extend the MC engine to record path extrema and apply knock-in/knock-out logic. Add partial analytical solutions under GBM as a cross-check.
 
 - [ ] **Exotic options: Asians** — Path-dependent average-price payoff in MC. Records running average along each path instead of just the terminal value.
 
@@ -42,4 +44,5 @@ _Nothing started yet._
 ## Done
 
 - [x] **Continuous dividend yield** — Added `q` param (Merton model: `r → r - q`) to all three pricers, all request models, and the frontend form. 29/29 tests passing.
+- [x] **Exotic options: barriers** — MC path simulation with discrete monitoring (default 252 steps). Four barrier types (up/down × in/out). Sample path visualisation with barrier hit colouring. Vanilla BS price shown for comparison.
 - [x] **Discrete dividends** — Escrowed-dividend approach (S_adj = S − Σ PV(D_i)) in all three pricers. Binomial tree adds back PV of future dividends at each node for the American intrinsic check. Frontend has add/remove dividend UI. Note: the escrowed and forward-price adjustment methods are mathematically equivalent. 33/33 tests passing.
