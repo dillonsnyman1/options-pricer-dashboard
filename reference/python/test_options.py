@@ -17,7 +17,7 @@ import sys
 import pytest
 
 sys.path.insert(0, os.path.dirname(__file__))
-from options import barrier_mc, binomial_tree, bs_greeks, bs_price, implied_vol, monte_carlo
+from options import asian_mc, barrier_mc, binomial_tree, bs_greeks, bs_price, implied_vol, monte_carlo
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "..", "fixtures")
 
@@ -211,4 +211,35 @@ class TestBarrierMC:
         args = (self.S, self.K, self.T, self.r, self.sigma, "call")
         r1 = barrier_mc(*args, barrier=85, barrier_type="down_and_out", n_paths=1000, seed=7)
         r2 = barrier_mc(*args, barrier=85, barrier_type="down_and_out", n_paths=1000, seed=7)
+        assert r1["price"] == r2["price"]
+
+
+class TestAsianMC:
+    S, K, T, r, sigma = 100.0, 100.0, 1.0, 0.05, 0.20
+
+    def test_fixed_strike_cheaper_than_vanilla(self):
+        vanilla = bs_price(self.S, self.K, self.T, self.r, self.sigma, "call")
+        a = asian_mc(self.S, self.K, self.T, self.r, self.sigma, "call",
+                     asian_type="fixed_strike", n_paths=50_000)
+        assert a["price"] < vanilla
+
+    def test_fixed_strike_positive(self):
+        a = asian_mc(self.S, self.K, self.T, self.r, self.sigma, "call",
+                     asian_type="fixed_strike", n_paths=50_000)
+        assert a["price"] > 0.0
+
+    def test_floating_strike_positive(self):
+        a = asian_mc(self.S, self.K, self.T, self.r, self.sigma, "call",
+                     asian_type="floating_strike", n_paths=50_000)
+        assert a["price"] > 0.0
+
+    def test_put_fixed_strike_positive(self):
+        a = asian_mc(self.S, self.K, self.T, self.r, self.sigma, "put",
+                     asian_type="fixed_strike", n_paths=50_000)
+        assert a["price"] > 0.0
+
+    def test_seed_reproducible(self):
+        args = (self.S, self.K, self.T, self.r, self.sigma, "call")
+        r1 = asian_mc(*args, n_paths=1000, seed=7)
+        r2 = asian_mc(*args, n_paths=1000, seed=7)
         assert r1["price"] == r2["price"]

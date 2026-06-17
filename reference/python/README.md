@@ -6,7 +6,7 @@ Pure Python implementation - no external dependencies beyond the standard librar
 ## Usage
 
 ```python
-from options import bs_price, bs_greeks, implied_vol, monte_carlo, binomial_tree, barrier_mc
+from options import bs_price, bs_greeks, implied_vol, monte_carlo, binomial_tree, barrier_mc, asian_mc
 
 price = bs_price(S=100, K=100, T=1.0, r=0.05, sigma=0.20, option_type='call')
 # 10.4506
@@ -26,6 +26,10 @@ tree = binomial_tree(100, 100, 1.0, 0.05, 0.20, 'call', n_steps=200)
 b = barrier_mc(100, 100, 1.0, 0.05, 0.20, 'call', barrier=85,
                barrier_type='down_and_out', n_paths=100_000, seed=42)
 # {'price': ~9.8, 'std_error': ..., 'n_paths': 100000, 'barrier_hit_pct': ...}
+
+a = asian_mc(100, 100, 1.0, 0.05, 0.20, 'call',
+             asian_type='fixed_strike', n_paths=100_000, seed=42)
+# {'price': ~5.8, 'std_error': ..., 'n_paths': 100000}
 ```
 
 ## Tests

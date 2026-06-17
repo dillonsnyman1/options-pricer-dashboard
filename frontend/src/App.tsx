@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { priceOption } from "./api/client";
+import { AsianChart } from "./components/AsianChart";
 import { BarrierChart } from "./components/BarrierChart";
 import { GreeksPanel } from "./components/GreeksPanel";
 import { GreeksSensitivityChart } from "./components/GreeksSensitivityChart";
@@ -20,7 +21,7 @@ const TAB_LABELS: [Tab, string][] = [
   ["iv-smile", "IV Smile"],
   ["monte-carlo", "Monte Carlo"],
   ["pnl", "P&L Heatmap"],
-  ["exotics", "Barrier Options"],
+  ["exotics", "Exotics"],
 ];
 
 function App() {
@@ -85,7 +86,7 @@ function App() {
               <li>On the <strong>IV Smile</strong> tab, drag skew negative for the typical equity put skew, then increase curvature to add the symmetric smile</li>
               <li>The <strong>Monte Carlo</strong> tab shows the 95% CI collapsing as path count grows - noisy at 100 paths, within a cent of Black-Scholes at 200k</li>
               <li>The <strong>P&amp;L Heatmap</strong> shows position value across a grid of spot moves and vol shocks simultaneously</li>
-              <li>The <strong>Barrier Options</strong> tab simulates paths that knock in or out at a barrier - drag the barrier slider to see how the discount vs. vanilla changes and watch which sample paths survive</li>
+              <li>The <strong>Exotics</strong> tab simulates barrier paths that knock in or out and Asian options where the payoff is on the average price - notice how the running average lines converge and the Asian discount vs. vanilla</li>
             </ul>
           </div>
 
@@ -112,7 +113,12 @@ function App() {
             {activeTab === "iv-smile" && <IVSmileChart inputs={inputs} />}
             {activeTab === "monte-carlo" && <MCConvergenceChart inputs={inputs} />}
             {activeTab === "pnl" && <PnLHeatmap inputs={inputs} />}
-            {activeTab === "exotics" && <BarrierChart inputs={inputs} />}
+            {activeTab === "exotics" && (
+              <>
+                <BarrierChart inputs={inputs} />
+                <AsianChart inputs={inputs} />
+              </>
+            )}
           </div>
         </>
       )}

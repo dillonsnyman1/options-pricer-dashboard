@@ -192,3 +192,40 @@ class BarrierPriceResponse(BaseModel):
     n_monitoring_steps: int
     time_points: list[float]
     sample_paths: list[SamplePath]
+
+
+class AsianType(str, Enum):
+    fixed_strike = "fixed_strike"
+    floating_strike = "floating_strike"
+
+
+class AsianPriceRequest(BaseModel):
+    S: float = Field(gt=0)
+    K: float = Field(gt=0)
+    T: float = Field(gt=0)
+    r: float
+    sigma: float = Field(gt=0)
+    q: float = Field(default=0.0, ge=0.0)
+    option_type: OptionType
+    asian_type: AsianType = Field(default=AsianType.fixed_strike)
+    n_paths: int = Field(default=200_000, ge=1_000, le=500_000)
+    n_steps: int = Field(default=252, ge=50, le=1000)
+    n_sample_paths: int = Field(default=20, ge=5, le=50)
+
+
+class AsianSamplePath(BaseModel):
+    prices: list[float]
+    averages: list[float]
+
+
+class AsianPriceResponse(BaseModel):
+    mc_price: float
+    mc_std_error: float
+    mc_confidence_lower: float
+    mc_confidence_upper: float
+    vanilla_price: float
+    average_price_mean: float
+    n_paths: int
+    n_steps: int
+    time_points: list[float]
+    sample_paths: list[AsianSamplePath]

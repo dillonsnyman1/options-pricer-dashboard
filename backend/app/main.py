@@ -5,6 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import (
+    AsianPriceRequest,
+    AsianPriceResponse,
+    AsianSamplePath,
     BarrierPriceRequest,
     BarrierPriceResponse,
     BinomialResult,
@@ -23,7 +26,7 @@ from app.models import (
     PriceResponse,
     SamplePath,
 )
-from app.pricing import barrier, binomial_tree, black_scholes, monte_carlo
+from app.pricing import asian, barrier, binomial_tree, black_scholes, monte_carlo
 
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
 
@@ -156,6 +159,22 @@ def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
         vols=[round(float(v), 6) for v in vols],
         pnl=pnl,
         current_price=round(current_price, 6),
+    )
+
+
+@app.post("/api/asian-price", response_model=AsianPriceResponse)
+def asian_price(req: AsianPriceRequest) -> AsianPriceResponse:
+    opt = req.option_type.value
+    vanilla = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
+    mc = asian.price_asian_mc(
+        req.S, req.K, req.T, req.r, req.sigma, opt,
+        req.asian_type.value, q=req.q,
+        n_paths=req.n_paths, n_steps=req.n_steps, n_sample_paths=req.n_sample_paths,
+    )
+    return AsianPriceResponse(
+        vanilla_price=round(vanilla, 6),
+        sample_paths=[AsianSamplePath(**p) for p in mc.pop("sample_paths")],
+        **mc,
     )
 
 

@@ -114,6 +114,31 @@ export interface BarrierPriceResponse {
   sample_paths: SamplePath[];
 }
 
+export type AsianType = "fixed_strike" | "floating_strike";
+
+export interface AsianSamplePath {
+  prices: number[];
+  averages: number[];
+}
+
+export interface AsianPriceResponse {
+  mc_price: number;
+  mc_std_error: number;
+  mc_confidence_lower: number;
+  mc_confidence_upper: number;
+  vanilla_price: number;
+  average_price_mean: number;
+  n_paths: number;
+  n_steps: number;
+  time_points: number[];
+  sample_paths: AsianSamplePath[];
+}
+
+export const ASIAN_TYPE_LABELS: Record<AsianType, string> = {
+  fixed_strike: "Fixed Strike",
+  floating_strike: "Floating Strike",
+};
+
 export const BARRIER_TYPE_LABELS: Record<BarrierType, string> = {
   down_and_out: "Down-and-Out",
   down_and_in: "Down-and-In",

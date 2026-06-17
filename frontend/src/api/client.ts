@@ -1,4 +1,6 @@
 import type {
+  AsianPriceResponse,
+  AsianType,
   BarrierPriceResponse,
   BarrierType,
   IVSmilePoint,
@@ -58,6 +60,18 @@ export function ivSmile(
 
 export function mcConvergence(inputs: OptionInputs): Promise<MCConvergenceResponse> {
   return post<MCConvergenceResponse>("/api/mc-convergence", inputs);
+}
+
+export function asianPrice(
+  inputs: OptionInputs,
+  asianType: AsianType,
+  nSamplePaths = 20,
+): Promise<AsianPriceResponse> {
+  return post<AsianPriceResponse>("/api/asian-price", {
+    ...inputs,
+    asian_type: asianType,
+    n_sample_paths: nSamplePaths,
+  });
 }
 
 export function barrierPrice(

@@ -19,8 +19,9 @@ All four implement the same five core algorithms:
 | `binomial_tree` | CRR backward induction, returns European and American prices in one pass |
 
 The Python reference also includes `barrier_mc` (path-dependent barrier option
-pricing via Monte Carlo with discrete monitoring). Adding this to R, C++, and
-MATLAB is tracked as a follow-up.
+pricing via Monte Carlo with discrete monitoring) and `asian_mc` (arithmetic
+average-price Asian option pricing). Adding these to R, C++, and MATLAB is
+tracked as a follow-up.
 
 Python, R, and C++ are validated against the fixtures in [`fixtures/`](fixtures/)
 as part of automated CI. MATLAB uses the same fixtures but is validated manually

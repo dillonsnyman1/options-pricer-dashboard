@@ -178,6 +178,28 @@ time step), which is an approximation of continuous monitoring. In practice the
 discrete price converges to the continuous price as the number of monitoring steps
 increases.
 
+### 6. Asian Options (Monte Carlo)
+
+Asian options pay off on the arithmetic average of the underlying price over the
+option's life rather than just the terminal value. Two variants are supported:
+
+| Type | Payoff (call) | Payoff (put) |
+|------|---------------|--------------|
+| Fixed strike | max(A − K, 0) | max(K − A, 0) |
+| Floating strike | max(S_T − A, 0) | max(A − S_T, 0) |
+
+where A is the arithmetic average of spot prices observed at each monitoring step.
+
+Asian options are cheaper than their vanilla equivalents because the average has
+lower volatility than the terminal price — averaging smooths out the path. This
+makes them popular in commodity and FX markets where clients want exposure to a
+period average rather than a single fixing date.
+
+Like barriers, Asian options have no simple Black-Scholes closed form (the
+arithmetic average of lognormals is not lognormal), so Monte Carlo is the
+natural pricing tool. The Exotics tab shows sample price paths alongside their
+running averages, which visibly converge as observations accumulate.
+
 ---
 
 ## Known limitations and possible extensions
@@ -224,11 +246,9 @@ static arbitrage. SABR is more common in rates and FX. Either would replace the
 toy `sigma_ATM + skew*m + curvature*m^2` used here with a properly calibrated
 surface.
 
-**Exotic options: Asians**
-Asian (average-price) options are path-dependent, so Black-Scholes has no simple
-closed form. They are a natural Monte Carlo extension: the simulation records the
-running average along each path instead of just the terminal value. (Barrier
-options are already implemented — see section 5 above.)
+**~~Exotic options~~ (implemented)**
+Barrier options (section 5) and Asian options (section 6) are both implemented
+via Monte Carlo path simulation. See the Exotics tab in the dashboard.
 
 **Real market data**
 Connecting to a live data source (e.g. CBOE for options chains, Yahoo Finance

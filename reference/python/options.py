@@ -246,3 +246,59 @@ def barrier_mc(
         "n_paths": n_paths,
         "barrier_hit_pct": hits / n * 100,
     }
+
+
+def asian_mc(
+    S: float,
+    K: float,
+    T: float,
+    r: float,
+    sigma: float,
+    option_type: str,
+    asian_type: str = "fixed_strike",
+    n_paths: int = 100_000,
+    n_steps: int = 252,
+    seed: int = 42,
+) -> dict:
+    """
+    Monte Carlo Asian option pricing with antithetic variates.
+
+    Simulates full paths step-by-step, tracking the arithmetic running
+    average. Two payoff types:
+      fixed_strike:    max(A - K, 0) for call, max(K - A, 0) for put
+      floating_strike: max(ST - A, 0) for call, max(A - ST, 0) for put
+    """
+    rng = random.Random(seed)
+    half = n_paths // 2
+    dt = T / n_steps
+    drift = (r - 0.5 * sigma ** 2) * dt
+    vol_dt = sigma * math.sqrt(dt)
+    disc = math.exp(-r * T)
+
+    payoffs = []
+
+    for _ in range(half):
+        draws = [rng.gauss(0.0, 1.0) for _ in range(n_steps)]
+
+        for sign in (1.0, -1.0):
+            s = S
+            running_sum = S
+            for z in draws:
+                s *= math.exp(drift + vol_dt * sign * z)
+                running_sum += s
+
+            avg = running_sum / (n_steps + 1)
+
+            if asian_type == "fixed_strike":
+                pf = max(avg - K, 0.0) if option_type == "call" else max(K - avg, 0.0)
+            else:
+                pf = max(s - avg, 0.0) if option_type == "call" else max(avg - s, 0.0)
+
+            payoffs.append(disc * pf)
+
+    n = len(payoffs)
+    mean = sum(payoffs) / n
+    variance = sum((p - mean) ** 2 for p in payoffs) / (n - 1)
+    std_error = math.sqrt(variance / n)
+
+    return {"price": mean, "std_error": std_error, "n_paths": n_paths}
