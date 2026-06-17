@@ -2,13 +2,19 @@ import numpy as np
 from scipy.stats import norm
 
 
+def _adjusted_spot(S: float, r: float, T: float, dividends) -> float:
+    """Escrowed-dividend adjustment: subtract PV of discrete dividends paid before expiry."""
+    return S - sum(D * np.exp(-r * t) for t, D in dividends if 0 < t <= T)
+
+
 def _d1_d2(S: float, K: float, T: float, r: float, sigma: float, q: float = 0.0) -> tuple[float, float]:
     d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
     d2 = d1 - sigma * np.sqrt(T)
     return d1, d2
 
 
-def price(S: float, K: float, T: float, r: float, sigma: float, option_type: str, q: float = 0.0) -> float:
+def price(S: float, K: float, T: float, r: float, sigma: float, option_type: str, q: float = 0.0, discrete_dividends=None) -> float:
+    S = _adjusted_spot(S, r, T, discrete_dividends or [])
     d1, d2 = _d1_d2(S, K, T, r, sigma, q)
     disc_q = np.exp(-q * T)
     if option_type == "call":
@@ -16,7 +22,8 @@ def price(S: float, K: float, T: float, r: float, sigma: float, option_type: str
     return float(K * np.exp(-r * T) * norm.cdf(-d2) - S * disc_q * norm.cdf(-d1))
 
 
-def greeks(S: float, K: float, T: float, r: float, sigma: float, option_type: str, q: float = 0.0) -> dict:
+def greeks(S: float, K: float, T: float, r: float, sigma: float, option_type: str, q: float = 0.0, discrete_dividends=None) -> dict:
+    S = _adjusted_spot(S, r, T, discrete_dividends or [])
     d1, d2 = _d1_d2(S, K, T, r, sigma, q)
     phi = norm.pdf(d1)
     sqrt_T = np.sqrt(T)
@@ -43,8 +50,9 @@ def greeks(S: float, K: float, T: float, r: float, sigma: float, option_type: st
     return {"delta": delta, "gamma": gamma, "vega": vega, "theta": theta, "rho": rho}
 
 
-def _vega_raw(S: float, K: float, T: float, r: float, sigma: float, q: float = 0.0) -> float:
+def _vega_raw(S: float, K: float, T: float, r: float, sigma: float, q: float = 0.0, discrete_dividends=None) -> float:
     """Unscaled vega (∂C/∂σ), used in Newton-Raphson IV solver."""
+    S = _adjusted_spot(S, r, T, discrete_dividends or [])
     d1, _ = _d1_d2(S, K, T, r, sigma, q)
     return float(S * np.exp(-q * T) * norm.pdf(d1) * np.sqrt(T))
 
@@ -57,13 +65,14 @@ def implied_vol(
     r: float,
     option_type: str,
     q: float = 0.0,
+    discrete_dividends=None,
     tol: float = 1e-7,
     max_iter: int = 100,
 ) -> float:
     sigma = 0.2
     for _ in range(max_iter):
-        p = price(S, K, T, r, sigma, option_type, q)
-        v = _vega_raw(S, K, T, r, sigma, q)
+        p = price(S, K, T, r, sigma, option_type, q, discrete_dividends)
+        v = _vega_raw(S, K, T, r, sigma, q, discrete_dividends)
         diff = p - market_price
         if abs(diff) < tol:
             return sigma

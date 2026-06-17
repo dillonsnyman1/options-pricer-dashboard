@@ -85,6 +85,32 @@ class TestBlackScholes:
         iv = black_scholes.implied_vol(p, S, K, T, r, "call", q=q)
         assert abs(iv - sigma) < 1e-5
 
+    def test_discrete_dividend_lowers_call_price(self):
+        divs = [(0.5, 2.0)]
+        c_no_div = black_scholes.price(S, K, T, r, sigma, "call")
+        c_div = black_scholes.price(S, K, T, r, sigma, "call", discrete_dividends=divs)
+        assert c_div < c_no_div
+
+    def test_discrete_dividend_raises_put_price(self):
+        divs = [(0.5, 2.0)]
+        p_no_div = black_scholes.price(S, K, T, r, sigma, "put")
+        p_div = black_scholes.price(S, K, T, r, sigma, "put", discrete_dividends=divs)
+        assert p_div > p_no_div
+
+    def test_put_call_parity_with_discrete_dividends(self):
+        divs = [(0.5, 2.0)]
+        c = black_scholes.price(S, K, T, r, sigma, "call", discrete_dividends=divs)
+        p = black_scholes.price(S, K, T, r, sigma, "put", discrete_dividends=divs)
+        pv_div = 2.0 * np.exp(-r * 0.5)
+        parity = (S - pv_div) - K * np.exp(-r * T)
+        assert abs((c - p) - parity) < 1e-6
+
+    def test_dividend_after_expiry_ignored(self):
+        divs = [(T + 0.5, 2.0)]
+        c_no_div = black_scholes.price(S, K, T, r, sigma, "call")
+        c_div = black_scholes.price(S, K, T, r, sigma, "call", discrete_dividends=divs)
+        assert abs(c_no_div - c_div) < 1e-10
+
 
 class TestBinomialTree:
     def test_european_call_converges_to_bs(self):

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { OptionInputs, OptionType } from "../types/options";
+import type { DividendPayment, OptionInputs, OptionType } from "../types/options";
 
 interface Props {
   inputs: OptionInputs;
@@ -35,6 +35,31 @@ export function OptionForm({ inputs, onChange }: Props) {
     onChange(draft);
   }
 
+  function addDividend() {
+    setDraft((prev) => ({
+      ...prev,
+      discrete_dividends: [...prev.discrete_dividends, { t: 0.5, D: 1.0 }],
+    }));
+  }
+
+  function removeDividend(i: number) {
+    setDraft((prev) => ({
+      ...prev,
+      discrete_dividends: prev.discrete_dividends.filter((_, idx) => idx !== i),
+    }));
+  }
+
+  function updateDividend(i: number, field: keyof DividendPayment, value: number) {
+    if (!isNaN(value)) {
+      setDraft((prev) => ({
+        ...prev,
+        discrete_dividends: prev.discrete_dividends.map((d, idx) =>
+          idx === i ? { ...d, [field]: value } : d
+        ),
+      }));
+    }
+  }
+
   return (
     <div className="option-form">
       {FIELDS.map(({ key, label, hint, step }) => (
@@ -67,6 +92,34 @@ export function OptionForm({ inputs, onChange }: Props) {
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="dividends-section">
+        <span className="dividends-header">Discrete Dividends</span>
+        {draft.discrete_dividends.map((div, i) => (
+          <div key={i} className="dividend-row">
+            <span className="dividend-label">t =</span>
+            <input
+              className="dividend-input"
+              type="number"
+              step={0.25}
+              min={0.01}
+              value={div.t}
+              onChange={(e) => updateDividend(i, "t", parseFloat(e.target.value))}
+            />
+            <span className="dividend-label">yr &nbsp; D =</span>
+            <input
+              className="dividend-input"
+              type="number"
+              step={0.5}
+              min={0.01}
+              value={div.D}
+              onChange={(e) => updateDividend(i, "D", parseFloat(e.target.value))}
+            />
+            <button className="remove-dividend-btn" onClick={() => removeDividend(i)}>×</button>
+          </div>
+        ))}
+        <button className="add-dividend-btn" onClick={addDividend}>+ Add Dividend</button>
       </div>
 
       <button className="apply-button" onClick={handleApply}>

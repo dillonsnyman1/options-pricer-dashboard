@@ -15,8 +15,6 @@ _Nothing started yet._
 
 ### Easy
 
-- [ ] **Discrete dividends** — Two approaches: escrowed-dividend (subtract PV of dividends from spot before pricing) or forward-price adjustment. More care needed than continuous yield, especially for the binomial tree where ex-dividend dates fall at specific nodes.
-
 - [ ] **Reference implementation: Julia** — Standalone implementation of all five algorithms in `reference/julia/`, validated against the shared fixtures in `reference/fixtures/`. No changes to the main app.
 
 - [ ] **Reference implementation: Java** — Same as Julia but Java/Kotlin. Relevant for bank risk systems context.
@@ -44,3 +42,4 @@ _Nothing started yet._
 ## Done
 
 - [x] **Continuous dividend yield** — Added `q` param (Merton model: `r → r - q`) to all three pricers, all request models, and the frontend form. 29/29 tests passing.
+- [x] **Discrete dividends** — Escrowed-dividend approach (S_adj = S − Σ PV(D_i)) in all three pricers. Binomial tree adds back PV of future dividends at each node for the American intrinsic check. Frontend has add/remove dividend UI. Note: the escrowed and forward-price adjustment methods are mathematically equivalent. 33/33 tests passing.

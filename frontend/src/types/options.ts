@@ -1,5 +1,10 @@
 export type OptionType = "call" | "put";
 
+export interface DividendPayment {
+  t: number;
+  D: number;
+}
+
 export type SensitivityParam = "spot" | "vol" | "time" | "rate";
 
 export type GreekKey = "delta" | "gamma" | "vega" | "theta" | "rho";
@@ -14,6 +19,7 @@ export interface OptionInputs {
   option_type: OptionType;
   n_paths: number;
   n_steps: number;
+  discrete_dividends: DividendPayment[];
 }
 
 export interface Greeks {
@@ -115,4 +121,5 @@ export const DEFAULT_INPUTS: OptionInputs = {
   option_type: "call",
   n_paths: 200_000,
   n_steps: 500,
+  discrete_dividends: [],
 };

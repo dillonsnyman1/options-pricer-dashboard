@@ -166,10 +166,10 @@ hold in a production pricing library:
   parametric smile here is a toy stand-in; a real system would calibrate to
   actual market quotes and enforce no-arbitrage constraints across the surface.
 
-- **Discrete dividends.** Continuous dividend yield `q` is supported via the Merton
-  adjustment (r → r − q in d1 and the risk-neutral drift). Discrete dividends require
-  more care — either the escrowed-dividend or forward-price adjustment approach, as
-  ex-dividend dates fall at specific nodes in the binomial tree.
+- **~~Dividends~~ (implemented).** Continuous dividend yield `q` via the Merton
+  adjustment, and discrete dividends via the escrowed approach (subtract PV of each
+  dividend from spot before pricing). Both methods are available in all three pricers.
+  The escrowed and forward-price adjustment approaches are mathematically equivalent.
 
 - **No term structure.** Each pricing request takes a single expiry. A real vol
   surface has a term structure: different implied vol levels and smile shapes at

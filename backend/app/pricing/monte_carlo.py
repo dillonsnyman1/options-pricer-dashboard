@@ -11,6 +11,7 @@ def price_with_convergence(
     path_counts: list[int],
     seed: int = 42,
     q: float = 0.0,
+    discrete_dividends=None,
 ) -> list[dict]:
     """Price the option at each path count in path_counts using antithetic variates.
 
@@ -18,6 +19,9 @@ def price_with_convergence(
     sub-sample of the full draw. That means convergence is smooth rather than
     jumping around between independent estimates.
     """
+    pv_divs = sum(D * np.exp(-r * t) for t, D in (discrete_dividends or []) if 0 < t <= T)
+    S = S - pv_divs
+
     max_paths = path_counts[-1]
     rng = np.random.default_rng(seed)
 
@@ -62,5 +66,6 @@ def price(
     n_paths: int = 200_000,
     seed: int = 42,
     q: float = 0.0,
+    discrete_dividends=None,
 ) -> dict:
-    return price_with_convergence(S, K, T, r, sigma, option_type, [n_paths], seed, q)[0]
+    return price_with_convergence(S, K, T, r, sigma, option_type, [n_paths], seed, q, discrete_dividends)[0]

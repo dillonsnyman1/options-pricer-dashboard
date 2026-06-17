@@ -39,13 +39,14 @@ _MC_CONVERGENCE_STEPS = [100, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 
 @app.post("/api/price", response_model=PriceResponse)
 def price_option(req: PriceRequest) -> PriceResponse:
     opt = req.option_type.value
+    divs = [(d.t, d.D) for d in req.discrete_dividends]
 
-    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
-    bs_g = black_scholes.greeks(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
+    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q, divs)
+    bs_g = black_scholes.greeks(req.S, req.K, req.T, req.r, req.sigma, opt, req.q, divs)
 
-    mc = monte_carlo.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.n_paths, q=req.q)
+    mc = monte_carlo.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.n_paths, q=req.q, discrete_dividends=divs)
 
-    bin_ = binomial_tree.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.n_steps, req.q)
+    bin_ = binomial_tree.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.n_steps, req.q, divs)
 
     return PriceResponse(
         bs=BSResult(price=bs_price, greeks=Greeks(**bs_g)),
@@ -74,11 +75,12 @@ def greeks_sensitivity(req: GreeksSensitivityRequest) -> list[dict]:
         values = np.linspace(lo, req.r + 0.05, req.n_points)
         def params(v): return (req.S, req.K, req.T, v, req.sigma)
 
+    divs = [(d.t, d.D) for d in req.discrete_dividends]
     results = []
     for v in values:
         S, K, T, r, sigma = params(float(v))
-        p = black_scholes.price(S, K, T, r, sigma, opt, req.q)
-        g = black_scholes.greeks(S, K, T, r, sigma, opt, req.q)
+        p = black_scholes.price(S, K, T, r, sigma, opt, req.q, divs)
+        g = black_scholes.greeks(S, K, T, r, sigma, opt, req.q, divs)
         results.append({"param_value": round(float(v), 8), "price": p, **g})
     return results
 
@@ -118,9 +120,10 @@ def iv_smile(req: IVSmileRequest) -> list[IVSmilePoint]:
 @app.post("/api/mc-convergence", response_model=MCConvergenceResponse)
 def mc_convergence(req: MCConvergenceRequest) -> MCConvergenceResponse:
     opt = req.option_type.value
-    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
+    divs = [(d.t, d.D) for d in req.discrete_dividends]
+    bs_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q, divs)
     paths_data = monte_carlo.price_with_convergence(
-        req.S, req.K, req.T, req.r, req.sigma, opt, _MC_CONVERGENCE_STEPS, q=req.q
+        req.S, req.K, req.T, req.r, req.sigma, opt, _MC_CONVERGENCE_STEPS, q=req.q, discrete_dividends=divs
     )
     return MCConvergenceResponse(
         bs_price=bs_price,
@@ -131,7 +134,8 @@ def mc_convergence(req: MCConvergenceRequest) -> MCConvergenceResponse:
 @app.post("/api/pnl-heatmap", response_model=PnLHeatmapResponse)
 def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
     opt = req.option_type.value
-    current_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q)
+    divs = [(d.t, d.D) for d in req.discrete_dividends]
+    current_price = black_scholes.price(req.S, req.K, req.T, req.r, req.sigma, opt, req.q, divs)
 
     spots = np.linspace(req.S * (1 - req.spot_range_pct), req.S * (1 + req.spot_range_pct), 20)
     vols = np.linspace(max(0.05, req.sigma / req.vol_range_mult), req.sigma * req.vol_range_mult, 20)
@@ -139,7 +143,7 @@ def pnl_heatmap(req: PnLHeatmapRequest) -> PnLHeatmapResponse:
     pnl: list[list[float]] = []
     for vol in vols:
         row = [
-            round(black_scholes.price(float(s), req.K, req.T, req.r, float(vol), opt, req.q) - current_price, 4)
+            round(black_scholes.price(float(s), req.K, req.T, req.r, float(vol), opt, req.q, divs) - current_price, 4)
             for s in spots
         ]
         pnl.append(row)

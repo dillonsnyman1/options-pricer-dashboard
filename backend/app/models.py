@@ -15,6 +15,11 @@ class SensitivityParam(str, Enum):
     rate = "rate"
 
 
+class DividendPayment(BaseModel):
+    t: float = Field(gt=0, description="Time of payment in years from today")
+    D: float = Field(gt=0, description="Cash dividend amount")
+
+
 class PriceRequest(BaseModel):
     S: float = Field(gt=0, description="Spot price")
     K: float = Field(gt=0, description="Strike price")
@@ -25,6 +30,7 @@ class PriceRequest(BaseModel):
     option_type: OptionType
     n_paths: int = Field(default=200_000, ge=1_000, le=500_000, description="Monte Carlo simulation paths")
     n_steps: int = Field(default=500, ge=50, le=2_000, description="Binomial tree steps")
+    discrete_dividends: list[DividendPayment] = Field(default_factory=list)
 
 
 class Greeks(BaseModel):
@@ -69,6 +75,7 @@ class GreeksSensitivityRequest(BaseModel):
     sigma: float = Field(gt=0)
     q: float = Field(default=0.0, ge=0.0)
     option_type: OptionType
+    discrete_dividends: list[DividendPayment] = Field(default_factory=list)
     vary_param: SensitivityParam
     n_points: int = Field(default=60, ge=10, le=200)
 
@@ -111,6 +118,7 @@ class MCConvergenceRequest(BaseModel):
     sigma: float = Field(gt=0)
     q: float = Field(default=0.0, ge=0.0)
     option_type: OptionType
+    discrete_dividends: list[DividendPayment] = Field(default_factory=list)
 
 
 class MCConvergencePoint(BaseModel):
@@ -134,6 +142,7 @@ class PnLHeatmapRequest(BaseModel):
     sigma: float = Field(gt=0)
     q: float = Field(default=0.0, ge=0.0)
     option_type: OptionType
+    discrete_dividends: list[DividendPayment] = Field(default_factory=list)
     spot_range_pct: float = Field(default=0.4, gt=0, le=0.8, description="Spot range as ± fraction of S, e.g. 0.4 = ±40%")
     vol_range_mult: float = Field(default=2.5, gt=1.0, le=5.0, description="Vol range multiplier: shows sigma/mult to sigma*mult")
 
