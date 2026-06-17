@@ -6,7 +6,7 @@ interface Props {
   onChange: (inputs: OptionInputs) => void;
 }
 
-const FIELDS: { key: keyof Omit<OptionInputs, "option_type">; label: string; hint: string; step: number }[] = [
+const FIELDS: { key: keyof Omit<OptionInputs, "option_type" | "discrete_dividends">; label: string; hint: string; step: number }[] = [
   { key: "S", label: "Spot (S)", hint: "Current asset price", step: 1 },
   { key: "K", label: "Strike (K)", hint: "Option strike price", step: 1 },
   { key: "T", label: "Expiry (T)", hint: "Years to expiry", step: 0.1 },
