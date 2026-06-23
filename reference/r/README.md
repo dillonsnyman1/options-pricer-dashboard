@@ -30,6 +30,19 @@ binomial_tree(100, 100, 1.0, 0.05, 0.20, 'call', n_steps=200L)
 # $european_price         ~10.44
 # $american_price         ~10.44
 # $early_exercise_premium ~0.0
+
+barrier_mc(100, 100, 1.0, 0.05, 0.20, 'call',
+           barrier=85, barrier_type='down_and_out', n_paths=50000L)
+# $price           ~10.0
+# $std_error       ...
+# $n_paths         50000
+# $barrier_hit_pct ~8.5
+
+asian_mc(100, 100, 1.0, 0.05, 0.20, 'call',
+         asian_type='fixed_strike', n_paths=50000L)
+# $price     ~5.8
+# $std_error ...
+# $n_paths   50000
 ```
 
 ## Tests

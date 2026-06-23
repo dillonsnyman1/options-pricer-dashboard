@@ -9,7 +9,7 @@ Ordered roughly by effort.
 
 - [ ] **Reference: exotic pricers in R, C++, MATLAB** — Python reference has barrier_mc and asian_mc; port to the other three languages and add fixture validation.
   - [x] Python
-  - [ ] R
+  - [x] R
   - [ ] C++
   - [ ] MATLAB
 

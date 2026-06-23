@@ -159,3 +159,81 @@ test_that("MC result is reproducible with same seed", {
     r2 <- monte_carlo(100, 100, 1.0, 0.05, 0.20, "call", n_paths = 1000L, seed = 7L)
     expect_equal(r1$price, r2$price)
 })
+
+# ---- Barrier MC --------------------------------------------------------------
+
+test_that("barrier knock-out price <= vanilla", {
+    vanilla <- bs_price(100, 100, 1.0, 0.05, 0.20, "call")
+    b <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                    barrier = 85, barrier_type = "down_and_out", n_paths = 50000L)
+    expect_lte(b$price, vanilla + 3 * b$std_error)
+})
+
+test_that("barrier in-out parity", {
+    vanilla <- bs_price(100, 100, 1.0, 0.05, 0.20, "call")
+    b_out <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                        barrier = 85, barrier_type = "down_and_out",
+                        n_paths = 50000L, seed = 42L)
+    b_in <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                       barrier = 85, barrier_type = "down_and_in",
+                       n_paths = 50000L, seed = 42L)
+    expect_lt(abs((b_out$price + b_in$price) - vanilla), 0.5)
+})
+
+test_that("barrier far from spot approaches vanilla", {
+    vanilla <- bs_price(100, 100, 1.0, 0.05, 0.20, "call")
+    b <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                    barrier = 10, barrier_type = "down_and_out", n_paths = 50000L)
+    expect_lt(abs(b$price - vanilla), 3 * b$std_error)
+})
+
+test_that("up-and-out near spot is cheap", {
+    vanilla <- bs_price(100, 100, 1.0, 0.05, 0.20, "call")
+    b <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                    barrier = 100 * 1.02, barrier_type = "up_and_out", n_paths = 50000L)
+    expect_lt(b$price, vanilla * 0.1)
+    expect_gt(b$barrier_hit_pct, 80.0)
+})
+
+test_that("barrier MC is reproducible with same seed", {
+    r1 <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                     barrier = 85, barrier_type = "down_and_out",
+                     n_paths = 1000L, seed = 7L)
+    r2 <- barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                     barrier = 85, barrier_type = "down_and_out",
+                     n_paths = 1000L, seed = 7L)
+    expect_equal(r1$price, r2$price)
+})
+
+# ---- Asian MC ----------------------------------------------------------------
+
+test_that("Asian fixed-strike cheaper than vanilla", {
+    vanilla <- bs_price(100, 100, 1.0, 0.05, 0.20, "call")
+    a <- asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                  asian_type = "fixed_strike", n_paths = 50000L)
+    expect_lt(a$price, vanilla)
+})
+
+test_that("Asian fixed-strike price is positive", {
+    a <- asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                  asian_type = "fixed_strike", n_paths = 50000L)
+    expect_gt(a$price, 0.0)
+})
+
+test_that("Asian floating-strike price is positive", {
+    a <- asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                  asian_type = "floating_strike", n_paths = 50000L)
+    expect_gt(a$price, 0.0)
+})
+
+test_that("Asian put fixed-strike price is positive", {
+    a <- asian_mc(100, 100, 1.0, 0.05, 0.20, "put",
+                  asian_type = "fixed_strike", n_paths = 50000L)
+    expect_gt(a$price, 0.0)
+})
+
+test_that("Asian MC is reproducible with same seed", {
+    r1 <- asian_mc(100, 100, 1.0, 0.05, 0.20, "call", n_paths = 1000L, seed = 7L)
+    r2 <- asian_mc(100, 100, 1.0, 0.05, 0.20, "call", n_paths = 1000L, seed = 7L)
+    expect_equal(r1$price, r2$price)
+})

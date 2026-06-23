@@ -1,5 +1,6 @@
 # Black-Scholes option pricing, Greeks, Newton-Raphson IV solver,
-# Monte Carlo with antithetic variates, and CRR binomial tree.
+# Monte Carlo with antithetic variates, CRR binomial tree, and
+# barrier/Asian option pricing via Monte Carlo.
 #
 # No package dependencies - pnorm/dnorm/rnorm are all base R.
 #
@@ -127,4 +128,105 @@ binomial_tree <- function(S, K, T, r, sigma, option_type, n_steps = 200L) {
         american_price        = am,
         early_exercise_premium = am - eur
     )
+}
+
+barrier_mc <- function(S, K, T, r, sigma, option_type,
+                       barrier, barrier_type,
+                       n_paths = 100000L, n_steps = 252L, seed = 42L) {
+    set.seed(seed)
+    half   <- n_paths %/% 2L
+    dt     <- T / n_steps
+    drift  <- (r - 0.5 * sigma^2) * dt
+    vol_dt <- sigma * sqrt(dt)
+    disc   <- exp(-r * T)
+
+    is_down <- startsWith(barrier_type, "down")
+    is_out  <- endsWith(barrier_type, "out")
+
+    Z <- matrix(rnorm(half * n_steps), nrow = half, ncol = n_steps)
+
+    payoffs <- numeric(n_paths)
+    hit_count <- 0L
+
+    for (sign_idx in 1:2) {
+        sign   <- c(1.0, -1.0)[sign_idx]
+        offset <- (sign_idx - 1L) * half
+
+        s   <- rep(S, half)
+        hit <- rep(FALSE, half)
+
+        for (j in seq_len(n_steps)) {
+            s <- s * exp(drift + vol_dt * sign * Z[, j])
+            if (is_down) {
+                hit <- hit | (s <= barrier)
+            } else {
+                hit <- hit | (s >= barrier)
+            }
+        }
+
+        hit_count <- hit_count + sum(hit)
+
+        pf <- if (option_type == "call") pmax(s - K, 0.0) else pmax(K - s, 0.0)
+
+        if (is_out) {
+            pf[hit] <- 0.0
+        } else {
+            pf[!hit] <- 0.0
+        }
+
+        payoffs[(offset + 1L):(offset + half)] <- disc * pf
+    }
+
+    n     <- length(payoffs)
+    price <- mean(payoffs)
+
+    list(price = price,
+         std_error = sd(payoffs) / sqrt(n),
+         n_paths = n_paths,
+         barrier_hit_pct = hit_count / n * 100)
+}
+
+asian_mc <- function(S, K, T, r, sigma, option_type,
+                     asian_type = "fixed_strike",
+                     n_paths = 100000L, n_steps = 252L, seed = 42L) {
+    set.seed(seed)
+    half   <- n_paths %/% 2L
+    dt     <- T / n_steps
+    drift  <- (r - 0.5 * sigma^2) * dt
+    vol_dt <- sigma * sqrt(dt)
+    disc   <- exp(-r * T)
+
+    Z <- matrix(rnorm(half * n_steps), nrow = half, ncol = n_steps)
+
+    payoffs <- numeric(n_paths)
+
+    for (sign_idx in 1:2) {
+        sign   <- c(1.0, -1.0)[sign_idx]
+        offset <- (sign_idx - 1L) * half
+
+        s           <- rep(S, half)
+        running_sum <- rep(S, half)
+
+        for (j in seq_len(n_steps)) {
+            s           <- s * exp(drift + vol_dt * sign * Z[, j])
+            running_sum <- running_sum + s
+        }
+
+        avg <- running_sum / (n_steps + 1L)
+
+        if (asian_type == "fixed_strike") {
+            pf <- if (option_type == "call") pmax(avg - K, 0.0) else pmax(K - avg, 0.0)
+        } else {
+            pf <- if (option_type == "call") pmax(s - avg, 0.0) else pmax(avg - s, 0.0)
+        }
+
+        payoffs[(offset + 1L):(offset + half)] <- disc * pf
+    }
+
+    n     <- length(payoffs)
+    price <- mean(payoffs)
+
+    list(price = price,
+         std_error = sd(payoffs) / sqrt(n),
+         n_paths = n_paths)
 }
