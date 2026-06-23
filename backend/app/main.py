@@ -4,6 +4,8 @@ import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi import HTTPException
+
 from app.models import (
     AsianPriceRequest,
     AsianPriceResponse,
@@ -16,6 +18,9 @@ from app.models import (
     GreeksSensitivityRequest,
     IVSmilePoint,
     IVSmileRequest,
+    MarketSmilePoint,
+    MarketSmileRequest,
+    MarketSmileResponse,
     MCConvergencePoint,
     MCConvergenceRequest,
     MCConvergenceResponse,
@@ -191,6 +196,101 @@ def barrier_price(req: BarrierPriceRequest) -> BarrierPriceResponse:
         vanilla_price=round(vanilla, 6),
         sample_paths=[SamplePath(**p) for p in mc.pop("sample_paths")],
         **mc,
+    )
+
+
+@app.get("/api/spot/{ticker}")
+def spot_price(ticker: str) -> dict:
+    from app import market_data
+
+    try:
+        spot = market_data.get_spot_price(ticker)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch spot: {exc}") from exc
+    return {"ticker": ticker.upper().strip(), "spot": round(spot, 4)}
+
+
+@app.get("/api/dividends/{ticker}")
+def dividends(ticker: str, horizon: float = 1.0) -> list[dict]:
+    from app import market_data
+    from datetime import date as _date, timedelta
+
+    try:
+        t = market_data._ticker(ticker)
+        today = _date.today()
+        end = today + timedelta(days=int(horizon * 365.25))
+        return market_data.project_dividends(t, today, end)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.post("/api/market-smile", response_model=MarketSmileResponse)
+def market_smile(req: MarketSmileRequest) -> MarketSmileResponse:
+    from app import market_data
+
+    try:
+        chain = market_data.get_option_chain(req.ticker, req.expiry)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch data from Yahoo Finance: {exc}") from exc
+
+    spot = chain["spot"]
+    T = chain["expiry_T"]
+    calls_by_strike = {c["strike"]: c for c in chain["calls"]}
+    puts_by_strike = {p["strike"]: p for p in chain["puts"]}
+    all_strikes = sorted(set(calls_by_strike) | set(puts_by_strike))
+
+    points: list[MarketSmilePoint] = []
+    for K in all_strikes:
+        if K <= spot:
+            row = puts_by_strike.get(K)
+            option_type = "put"
+        else:
+            row = calls_by_strike.get(K)
+            option_type = "call"
+
+        if row is None or row["mid"] <= 0 or row["openInterest"] < req.min_open_interest:
+            continue
+
+        intrinsic = max(spot - K, 0.0) if option_type == "call" else max(K - spot, 0.0)
+        disc_intrinsic = intrinsic * np.exp(-req.r * T)
+        if row["mid"] < disc_intrinsic:
+            continue
+
+        iv = black_scholes.implied_vol(row["mid"], spot, K, T, req.r, option_type, req.q)
+        if iv < 0.001 or iv > 5.0:
+            continue
+
+        points.append(MarketSmilePoint(
+            strike=round(K, 4),
+            moneyness=round(float(np.log(K / spot)), 6),
+            implied_vol=round(iv, 6),
+            mid_price=round(row["mid"], 4),
+            bid=round(row["bid"], 4),
+            ask=round(row["ask"], 4),
+            open_interest=row["openInterest"],
+            option_type=option_type,
+        ))
+
+    divs = chain["discrete_dividends"]
+    if req.dividend_horizon_years is not None:
+        from datetime import date as _date, timedelta
+        today = _date.today()
+        horizon = today + timedelta(days=int(req.dividend_horizon_years * 365.25))
+        divs = market_data.project_dividends(market_data._ticker(req.ticker), today, horizon)
+
+    return MarketSmileResponse(
+        ticker=req.ticker.upper().strip(),
+        spot=round(spot, 4),
+        dividend_yield=round(chain["dividend_yield"], 6),
+        expiry=chain["expiry"],
+        expiry_T=round(T, 6),
+        points=points,
+        available_expiries=chain["available_expiries"],
+        discrete_dividends=divs,
     )
 
 

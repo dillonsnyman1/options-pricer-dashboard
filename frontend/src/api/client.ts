@@ -3,7 +3,9 @@ import type {
   AsianType,
   BarrierPriceResponse,
   BarrierType,
+  DividendPayment,
   IVSmilePoint,
+  MarketSmileResponse,
   MCConvergenceResponse,
   OptionInputs,
   PnLHeatmapResponse,
@@ -44,7 +46,7 @@ export function ivSmile(
   skew: number,
   curvature: number,
   n_strikes = 20,
-  strike_range_pct = 0.45,
+  strike_range_pct = 0.25,
 ): Promise<IVSmilePoint[]> {
   return post<IVSmilePoint[]>("/api/iv-smile", {
     S: inputs.S,
@@ -87,6 +89,42 @@ export function barrierPrice(
     barrier_type: barrierType,
     n_steps: nSteps,
     n_sample_paths: nSamplePaths,
+  });
+}
+
+export async function spotPrice(ticker: string): Promise<{ ticker: string; spot: number }> {
+  const res = await fetch(`${API_BASE}/api/spot/${encodeURIComponent(ticker)}`);
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error((payload as { detail?: string } | null)?.detail ?? `Request failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function fetchDividends(ticker: string, horizon: number): Promise<DividendPayment[]> {
+  const res = await fetch(`${API_BASE}/api/dividends/${encodeURIComponent(ticker)}?horizon=${horizon}`);
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error((payload as { detail?: string } | null)?.detail ?? `Request failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export function marketSmile(
+  ticker: string,
+  expiry: string | null = null,
+  r = 0.05,
+  q = 0.0,
+  minOpenInterest = 10,
+  dividendHorizonYears: number | null = null,
+): Promise<MarketSmileResponse> {
+  return post<MarketSmileResponse>("/api/market-smile", {
+    ticker,
+    expiry,
+    r,
+    q,
+    min_open_interest: minOpenInterest,
+    dividend_horizon_years: dividendHorizonYears,
   });
 }
 

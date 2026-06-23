@@ -83,7 +83,7 @@ function App() {
             <span className="explore-label">What to try:</span>
             <ul className="explore-tips">
               <li>Switch to a <strong>put</strong> and move the strike deep ITM - the binomial American price will diverge from European as early exercise becomes attractive</li>
-              <li>On the <strong>IV Smile</strong> tab, drag skew negative for the typical equity put skew, then increase curvature to add the symmetric smile</li>
+              <li>On the <strong>IV Smile</strong> tab, drag skew negative for the typical equity put skew, then switch to <strong>Market</strong> or <strong>Both</strong> to overlay real options chain IVs and see where the parametric model breaks down</li>
               <li>The <strong>Monte Carlo</strong> tab shows the 95% CI collapsing as path count grows - noisy at 100 paths, within a cent of Black-Scholes at 200k</li>
               <li>The <strong>P&amp;L Heatmap</strong> shows position value across a grid of spot moves and vol shocks simultaneously</li>
               <li>The <strong>Exotics</strong> tab simulates barrier paths that knock in or out and Asian options where the payoff is on the average price - notice how the running average lines converge and the Asian discount vs. vanilla</li>

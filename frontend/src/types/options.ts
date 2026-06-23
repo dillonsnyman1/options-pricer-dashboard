@@ -134,6 +134,28 @@ export interface AsianPriceResponse {
   sample_paths: AsianSamplePath[];
 }
 
+export interface MarketSmilePoint {
+  strike: number;
+  moneyness: number;
+  implied_vol: number;
+  mid_price: number;
+  bid: number;
+  ask: number;
+  open_interest: number;
+  option_type: string;
+}
+
+export interface MarketSmileResponse {
+  ticker: string;
+  spot: number;
+  dividend_yield: number;
+  expiry: string;
+  expiry_T: number;
+  points: MarketSmilePoint[];
+  available_expiries: string[];
+  discrete_dividends: DividendPayment[];
+}
+
 export const ASIAN_TYPE_LABELS: Record<AsianType, string> = {
   fixed_strike: "Fixed Strike",
   floating_strike: "Floating Strike",

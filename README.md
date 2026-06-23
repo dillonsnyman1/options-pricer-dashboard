@@ -4,10 +4,11 @@
 
 A full-stack demo that prices European, American, and barrier options using three
 methods and shows the full Greeks, implied volatility smile, Monte Carlo
-convergence, barrier option path simulation, and a P&L scenario heatmap.
+convergence, barrier option path simulation, P&L scenario heatmap, and real
+market data integration via Yahoo Finance.
 
-- **Backend**: Python + FastAPI for the pricing engines
-- **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile, Monte Carlo, barrier options, P&L heatmap)
+- **Backend**: Python + FastAPI for the pricing engines and market data
+- **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile with market overlay, Monte Carlo, barrier options, P&L heatmap)
 
 > **Live demo**: [d10ls11pbsolux.cloudfront.net](https://d10ls11pbsolux.cloudfront.net) - try adjusting the option parameters, switching pricing methods, or exploring the Greeks sensitivity and IV smile tabs.
 >
@@ -44,7 +45,10 @@ stay directionally neutral, vega exposure to manage vol risk, and so on.
 The IV smile tab illustrates one of the most important empirical facts in options markets:
 if Black-Scholes were correct, implied vol would be flat across strikes. It isn't. The
 vol smile (or skew) is the market pricing in return distributions with fatter tails and
-more skew than the lognormal model assumes.
+more skew than the lognormal model assumes. The market data integration lets you fetch a
+live options chain from Yahoo Finance, solve for implied vol on each strike's mid price,
+and overlay the observed smile against the parametric model to see exactly where the simple
+quadratic breaks down.
 
 ---
 
@@ -150,6 +154,33 @@ adds a symmetric "smile" on top of the skew, reflecting fat-tail risk in both di
 The IV smile tab generates prices from this surface then backs out the IVs via the
 Newton-Raphson solver, so what you see is the round-trip: parametric vol -> price -> implied vol.
 
+The tab has three modes:
+
+- **Synthetic**: the parametric round-trip described above, with adjustable skew, curvature, and strike range
+- **Market**: fetches a live options chain from Yahoo Finance, computes mid prices from bid/ask, and solves for IV on each strike using OTM options (puts below spot, calls above) for numerical stability. Strikes are filtered by minimum open interest and spread width to remove illiquid noise.
+- **Both**: overlays synthetic and market curves on a common moneyness axis (ln(K/S)) so the two are directly comparable regardless of spot level
+
+### 7. Real Market Data Integration
+
+The ticker input in the main form fetches live data from Yahoo Finance and
+auto-populates all market-dependent parameters:
+
+| Field | Source |
+|-------|--------|
+| Spot (S) | Last traded price |
+| Strike (K) | Rounded to nearest ATM |
+| Expiry (T) | Nearest available option chain expiry |
+| Vol (sigma) | ATM implied volatility from the chain |
+| Div Yield (q) | Trailing annual dividend yield |
+| Discrete Dividends | Projected from historical ex-dates and amounts over the T horizon |
+
+Market-fetched fields are visually distinguished from user overrides: edited
+fields get an amber highlight showing the original source value, with per-field
+and bulk reset controls.
+
+The backend caches chain data for 60 seconds per (ticker, expiry) pair to avoid
+rate-limiting from Yahoo Finance.
+
 ### 5. Barrier Options (Monte Carlo)
 
 Barrier options are path-dependent: they knock in (activate) or knock out (expire
@@ -250,10 +281,11 @@ surface.
 Barrier options (section 5) and Asian options (section 6) are both implemented
 via Monte Carlo path simulation. See the Exotics tab in the dashboard.
 
-**Real market data**
-Connecting to a live data source (e.g. CBOE for options chains, Yahoo Finance
-for spot) would let the IV solver run the other direction: given real market
-prices, back out the full observed smile instead of generating a synthetic one.
+**~~Real market data~~ (implemented)**
+Yahoo Finance integration for live spot prices, options chains, dividend
+schedules, and observed IV smiles. Ticker input auto-populates all market-
+dependent parameters with visual tracking of user overrides vs source values.
+See section 7 above.
 
 **Portfolio / book mode**
 The current UI prices one option at a time. A book view would aggregate a

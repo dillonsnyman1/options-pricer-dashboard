@@ -43,6 +43,33 @@
 
 /* ── Option input form ───────────────────────────────────────────────────── */
 
+.option-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .option-form {
   display: flex;
   align-items: flex-end;
@@ -61,7 +88,8 @@
   color: var(--text);
 }
 
-.form-field input[type="number"] {
+.form-field input[type="number"],
+.form-field input[type="text"] {
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -80,6 +108,80 @@
   letter-spacing: normal;
   text-transform: none;
   color: var(--text);
+}
+
+.form-field.field-edited input[type="number"] {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.form-field.field-edited label {
+  color: #b45309;
+}
+
+.field-reset-btn {
+  display: inline;
+  background: none;
+  border: none;
+  color: #b45309;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 0 0 4px;
+  vertical-align: baseline;
+}
+
+.field-reset-btn:hover {
+  color: #92400e;
+}
+
+.field-source-hint {
+  color: #b45309;
+}
+
+.reset-all-btn {
+  display: inline;
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0;
+  margin-left: 10px;
+}
+
+.reset-all-btn:hover {
+  text-decoration: underline;
+}
+
+.data-freshness {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #16a34a;
+  margin-left: 10px;
+}
+
+.data-freshness.stale {
+  color: #dc2626;
+}
+
+.refresh-btn {
+  display: inline;
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 0 0 4px;
+  vertical-align: baseline;
+}
+
+.refresh-btn:hover {
+  color: #991b1b;
 }
 
 .type-toggle {

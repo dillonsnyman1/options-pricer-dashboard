@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -229,3 +230,39 @@ class AsianPriceResponse(BaseModel):
     n_steps: int
     time_points: list[float]
     sample_paths: list[AsianSamplePath]
+
+
+class MarketSmileRequest(BaseModel):
+    ticker: str = Field(description="Stock ticker symbol, e.g. AAPL")
+    expiry: Optional[str] = Field(default=None, description="Expiry date YYYY-MM-DD; if omitted, use nearest monthly")
+    r: float = Field(default=0.05, description="Risk-free rate assumption")
+    q: float = Field(default=0.0, ge=0.0, description="Dividend yield assumption")
+    min_open_interest: int = Field(default=10, ge=0, description="Filter out illiquid strikes")
+    dividend_horizon_years: Optional[float] = Field(default=None, gt=0, description="Project dividends over this horizon instead of the chain expiry")
+
+
+class MarketSmilePoint(BaseModel):
+    strike: float
+    moneyness: float
+    implied_vol: float
+    mid_price: float
+    bid: float
+    ask: float
+    open_interest: int
+    option_type: str
+
+
+class MarketDividend(BaseModel):
+    t: float
+    D: float
+
+
+class MarketSmileResponse(BaseModel):
+    ticker: str
+    spot: float
+    dividend_yield: float
+    expiry: str
+    expiry_T: float
+    points: list[MarketSmilePoint]
+    available_expiries: list[str]
+    discrete_dividends: list[MarketDividend]

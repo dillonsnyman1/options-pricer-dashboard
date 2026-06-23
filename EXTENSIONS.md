@@ -27,9 +27,6 @@ Ordered roughly by effort.
 
 - [ ] **Portfolio / book mode** — New API endpoint accepting a list of positions; aggregate net delta, gamma, vega, and combined P&L heatmap. Requires a position builder UI in the frontend.
 
-
-- [ ] **Real market data** — Connect to a live source (CBOE options chain, Yahoo Finance spot) and run the IV solver on real market prices to display the observed smile instead of the synthetic one.
-
 ### Hard
 
 - [ ] **American options via MC (Longstaff-Schwartz)** — Least-squares regression at each time step to estimate the continuation value and decide on early exercise. Significantly more involved than the binomial approach.
@@ -46,3 +43,4 @@ Ordered roughly by effort.
 - [x] **Exotic options: barriers** — MC path simulation with discrete monitoring (default 252 steps). Four barrier types (up/down × in/out). Sample path visualisation with barrier hit colouring. Vanilla BS price shown for comparison.
 - [x] **Exotic options: Asians** — MC with arithmetic running average. Fixed-strike (payoff on average vs K) and floating-strike (payoff on terminal vs average). Sample paths show spot and running average lines. Python reference included.
 - [x] **Discrete dividends** — Escrowed-dividend approach (S_adj = S − Σ PV(D_i)) in all three pricers. Binomial tree adds back PV of future dividends at each node for the American intrinsic check. Frontend has add/remove dividend UI. Note: the escrowed and forward-price adjustment methods are mathematically equivalent. 33/33 tests passing.
+- [x] **Real market data** — Yahoo Finance integration for live spot, options chains, dividend schedules, and observed IV smiles. Ticker input auto-populates S, K, T, sigma, q, and discrete dividends. IV Smile tab has Synthetic/Market/Both toggle to overlay parametric and observed smiles. Market-fetched fields show amber edit indicators with per-field and bulk reset to source.
