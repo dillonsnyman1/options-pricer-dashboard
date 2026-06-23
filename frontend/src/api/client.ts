@@ -9,6 +9,9 @@ import type {
   MCConvergenceResponse,
   OptionInputs,
   PnLHeatmapResponse,
+  PortfolioGreeksResponse,
+  PortfolioPnLHeatmapResponse,
+  PortfolioPosition,
   PriceResponse,
   SensitivityParam,
   SensitivityPoint,
@@ -99,6 +102,30 @@ export async function spotPrice(ticker: string): Promise<{ ticker: string; spot:
     throw new Error((payload as { detail?: string } | null)?.detail ?? `Request failed (${res.status})`);
   }
   return res.json();
+}
+
+function stripPositions(positions: PortfolioPosition[]) {
+  return positions.map(({ id, n_paths, n_steps, ...rest }) => rest);
+}
+
+export function portfolioGreeks(
+  positions: PortfolioPosition[],
+): Promise<PortfolioGreeksResponse> {
+  return post<PortfolioGreeksResponse>("/api/portfolio/greeks", { positions: stripPositions(positions) });
+}
+
+export function portfolioPnlHeatmap(
+  positions: PortfolioPosition[],
+  spotShockRangePct = 0.2,
+  volShockRangePct = 0.5,
+  gridSize = 20,
+): Promise<PortfolioPnLHeatmapResponse> {
+  return post<PortfolioPnLHeatmapResponse>("/api/portfolio/pnl-heatmap", {
+    positions: stripPositions(positions),
+    spot_shock_range_pct: spotShockRangePct,
+    vol_shock_range_pct: volShockRangePct,
+    grid_size: gridSize,
+  });
 }
 
 export async function fetchDividends(ticker: string, horizon: number): Promise<DividendPayment[]> {

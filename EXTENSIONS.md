@@ -23,10 +23,6 @@ Ordered roughly by effort.
 
 - [ ] **Reference implementation: Java** — Same as Julia but Java/Kotlin. Relevant for bank risk systems context.
 
-### Medium
-
-- [ ] **Portfolio / book mode** — New API endpoint accepting a list of positions; aggregate net delta, gamma, vega, and combined P&L heatmap. Requires a position builder UI in the frontend.
-
 ### Hard
 
 - [ ] **American options via MC (Longstaff-Schwartz)** — Least-squares regression at each time step to estimate the continuation value and decide on early exercise. Significantly more involved than the binomial approach.
@@ -44,3 +40,4 @@ Ordered roughly by effort.
 - [x] **Exotic options: Asians** — MC with arithmetic running average. Fixed-strike (payoff on average vs K) and floating-strike (payoff on terminal vs average). Sample paths show spot and running average lines. Python reference included.
 - [x] **Discrete dividends** — Escrowed-dividend approach (S_adj = S − Σ PV(D_i)) in all three pricers. Binomial tree adds back PV of future dividends at each node for the American intrinsic check. Frontend has add/remove dividend UI. Note: the escrowed and forward-price adjustment methods are mathematically equivalent. 33/33 tests passing.
 - [x] **Real market data** — Yahoo Finance integration for live spot, options chains, dividend schedules, and observed IV smiles. Ticker input auto-populates S, K, T, sigma, q, and discrete dividends. IV Smile tab has Synthetic/Market/Both toggle to overlay parametric and observed smiles. Market-fetched fields show amber edit indicators with per-field and bulk reset to source.
+- [x] **Portfolio / book mode** — Multi-name position builder with per-position ticker lookup via Yahoo Finance. Aggregated dollar Greeks (delta, gamma, vega, theta, rho) and combined P&L heatmap using parallel percentage shocks across spot and vol. Per-position drill-down on all analysis tabs via position selector dropdown. Edit tracking with amber indicators and reset-to-source on fetched fields. Staleness counter on portfolio-level market data.

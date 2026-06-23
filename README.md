@@ -8,7 +8,7 @@ convergence, barrier option path simulation, P&L scenario heatmap, and real
 market data integration via Yahoo Finance.
 
 - **Backend**: Python + FastAPI for the pricing engines and market data
-- **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile with market overlay, Monte Carlo, barrier options, P&L heatmap)
+- **Frontend**: React + Vite + TypeScript dashboard (pricer, Greeks, IV smile with market overlay, Monte Carlo, barrier options, P&L heatmap, multi-name portfolio mode)
 
 > **Live demo**: [d10ls11pbsolux.cloudfront.net](https://d10ls11pbsolux.cloudfront.net) - try adjusting the option parameters, switching pricing methods, or exploring the Greeks sensitivity and IV smile tabs.
 >
@@ -160,27 +160,6 @@ The tab has three modes:
 - **Market**: fetches a live options chain from Yahoo Finance, computes mid prices from bid/ask, and solves for IV on each strike using OTM options (puts below spot, calls above) for numerical stability. Strikes are filtered by minimum open interest and spread width to remove illiquid noise.
 - **Both**: overlays synthetic and market curves on a common moneyness axis (ln(K/S)) so the two are directly comparable regardless of spot level
 
-### 7. Real Market Data Integration
-
-The ticker input in the main form fetches live data from Yahoo Finance and
-auto-populates all market-dependent parameters:
-
-| Field | Source |
-|-------|--------|
-| Spot (S) | Last traded price |
-| Strike (K) | Rounded to nearest ATM |
-| Expiry (T) | Nearest available option chain expiry |
-| Vol (sigma) | ATM implied volatility from the chain |
-| Div Yield (q) | Trailing annual dividend yield |
-| Discrete Dividends | Projected from historical ex-dates and amounts over the T horizon |
-
-Market-fetched fields are visually distinguished from user overrides: edited
-fields get an amber highlight showing the original source value, with per-field
-and bulk reset controls.
-
-The backend caches chain data for 60 seconds per (ticker, expiry) pair to avoid
-rate-limiting from Yahoo Finance.
-
 ### 5. Barrier Options (Monte Carlo)
 
 Barrier options are path-dependent: they knock in (activate) or knock out (expire
@@ -216,13 +195,13 @@ option's life rather than just the terminal value. Two variants are supported:
 
 | Type | Payoff (call) | Payoff (put) |
 |------|---------------|--------------|
-| Fixed strike | max(A − K, 0) | max(K − A, 0) |
-| Floating strike | max(S_T − A, 0) | max(A − S_T, 0) |
+| Fixed strike | max(A - K, 0) | max(K - A, 0) |
+| Floating strike | max(S_T - A, 0) | max(A - S_T, 0) |
 
 where A is the arithmetic average of spot prices observed at each monitoring step.
 
 Asian options are cheaper than their vanilla equivalents because the average has
-lower volatility than the terminal price — averaging smooths out the path. This
+lower volatility than the terminal price - averaging smooths out the path. This
 makes them popular in commodity and FX markets where clients want exposure to a
 period average rather than a single fixing date.
 
@@ -230,6 +209,61 @@ Like barriers, Asian options have no simple Black-Scholes closed form (the
 arithmetic average of lognormals is not lognormal), so Monte Carlo is the
 natural pricing tool. The Exotics tab shows sample price paths alongside their
 running averages, which visibly converge as observations accumulate.
+
+### 7. Real Market Data Integration
+
+The ticker input in the main form fetches live data from Yahoo Finance and
+auto-populates all market-dependent parameters:
+
+| Field | Source |
+|-------|--------|
+| Spot (S) | Last traded price |
+| Strike (K) | Rounded to nearest ATM |
+| Expiry (T) | Nearest available option chain expiry |
+| Vol (sigma) | ATM implied volatility from the chain |
+| Div Yield (q) | Trailing annual dividend yield |
+| Discrete Dividends | Projected from historical ex-dates and amounts over the T horizon |
+
+Market-fetched fields are visually distinguished from user overrides: edited
+fields get an amber highlight showing the original source value, with per-field
+and bulk reset controls.
+
+The backend caches chain data for 60 seconds per (ticker, expiry) pair to avoid
+rate-limiting from Yahoo Finance.
+
+### 8. Portfolio / Book Mode
+
+The dashboard supports multi-name portfolio analysis, the same approach used
+by industry risk systems. The top-level mode toggle switches between single-
+option analysis and portfolio mode.
+
+**Position builder**: A table-based editor where you add positions across
+different underlyings. Enter tickers and quantities, then Fetch All to
+populate spot, strike, expiry, vol, dividend yield, and discrete dividends
+from Yahoo Finance in parallel. Fetched values show amber edit indicators
+when modified, with per-field and bulk reset-to-source controls.
+
+**Dollar Greeks**: Since positions span multiple underlyings with different
+spot prices, raw Greeks (delta per $1 spot move) are not comparable across
+names. The portfolio view reports dollar Greeks:
+
+| Greek | Formula | Interpretation |
+|-------|---------|----------------|
+| Dollar Delta | qty x delta x S | $ P&L from $1 spot move |
+| Dollar Gamma | qty x gamma x S^2 / 100 | $ P&L from 1% spot move |
+| Dollar Vega | qty x vega | $ P&L from 1% vol move |
+| Dollar Theta | qty x theta | $ P&L per calendar day |
+| Dollar Rho | qty x rho | $ P&L from 1% rate move |
+
+**Combined P&L heatmap**: Uses parallel percentage shocks rather than
+absolute values, so moves are comparable across names. Each position's spot
+is shocked by the same percentage (-20% to +20%) and each position's vol
+by the same percentage (-50% to +100%, asymmetric to avoid negative vols).
+The grid shows combined P&L across all positions at each shock combination.
+
+**Per-position drill-down**: The Greeks Sensitivity, IV Smile, Monte Carlo,
+and Exotics tabs show a position selector dropdown in portfolio mode,
+letting you analyze any individual leg with the full single-option toolkit.
 
 ---
 
@@ -287,10 +321,10 @@ schedules, and observed IV smiles. Ticker input auto-populates all market-
 dependent parameters with visual tracking of user overrides vs source values.
 See section 7 above.
 
-**Portfolio / book mode**
-The current UI prices one option at a time. A book view would aggregate a
-position of multiple options and show net delta, gamma, vega, and the combined
-P&L heatmap - which is closer to how risk is actually managed on a desk.
+**~~Portfolio / book mode~~ (implemented)**
+Multi-name position builder with per-position market data lookup, aggregated
+dollar Greeks, and combined P&L heatmap using parallel percentage shocks.
+See section 8 below.
 
 **Reference implementations**
 Julia and Java would be useful additions to the `reference/` folder. Julia is

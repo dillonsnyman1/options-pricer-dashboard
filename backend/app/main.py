@@ -27,6 +27,11 @@ from app.models import (
     MCResult,
     PnLHeatmapRequest,
     PnLHeatmapResponse,
+    PortfolioGreeksRequest,
+    PortfolioGreeksResponse,
+    PortfolioPnLHeatmapRequest,
+    PortfolioPnLHeatmapResponse,
+    PortfolioPositionGreeks,
     PriceRequest,
     PriceResponse,
     SamplePath,
@@ -291,6 +296,84 @@ def market_smile(req: MarketSmileRequest) -> MarketSmileResponse:
         points=points,
         available_expiries=chain["available_expiries"],
         discrete_dividends=divs,
+    )
+
+
+@app.post("/api/portfolio/greeks", response_model=PortfolioGreeksResponse)
+def portfolio_greeks(req: PortfolioGreeksRequest) -> PortfolioGreeksResponse:
+    pos_results = []
+    for pos in req.positions:
+        opt = pos.option_type.value
+        divs = [(d.t, d.D) for d in pos.discrete_dividends]
+        p = black_scholes.price(pos.S, pos.K, pos.T, pos.r, pos.sigma, opt, pos.q, divs)
+        g = black_scholes.greeks(pos.S, pos.K, pos.T, pos.r, pos.sigma, opt, pos.q, divs)
+        q = pos.quantity
+        pos_results.append(PortfolioPositionGreeks(
+            ticker=pos.ticker,
+            option_type=opt,
+            S=pos.S,
+            K=pos.K,
+            quantity=q,
+            price=round(p, 6),
+            position_value=round(q * p, 4),
+            delta=round(g["delta"], 6),
+            gamma=round(g["gamma"], 6),
+            vega=round(g["vega"], 6),
+            theta=round(g["theta"], 6),
+            rho=round(g["rho"], 6),
+            dollar_delta=round(q * g["delta"] * pos.S, 2),
+            dollar_gamma=round(q * g["gamma"] * pos.S ** 2 / 100, 2),
+            dollar_vega=round(q * g["vega"], 4),
+            dollar_theta=round(q * g["theta"], 4),
+            dollar_rho=round(q * g["rho"], 4),
+        ))
+
+    return PortfolioGreeksResponse(
+        positions=pos_results,
+        net_dollar_delta=round(sum(p.dollar_delta for p in pos_results), 2),
+        net_dollar_gamma=round(sum(p.dollar_gamma for p in pos_results), 2),
+        net_dollar_vega=round(sum(p.dollar_vega for p in pos_results), 4),
+        net_dollar_theta=round(sum(p.dollar_theta for p in pos_results), 4),
+        net_dollar_rho=round(sum(p.dollar_rho for p in pos_results), 4),
+        net_position_value=round(sum(p.position_value for p in pos_results), 4),
+    )
+
+
+@app.post("/api/portfolio/pnl-heatmap", response_model=PortfolioPnLHeatmapResponse)
+def portfolio_pnl_heatmap(req: PortfolioPnLHeatmapRequest) -> PortfolioPnLHeatmapResponse:
+    positions = req.positions
+    current_value = 0.0
+    for pos in positions:
+        opt = pos.option_type.value
+        divs = [(d.t, d.D) for d in pos.discrete_dividends]
+        current_value += pos.quantity * black_scholes.price(
+            pos.S, pos.K, pos.T, pos.r, pos.sigma, opt, pos.q, divs
+        )
+
+    spot_shocks = np.linspace(-req.spot_shock_range_pct, req.spot_shock_range_pct, req.grid_size).tolist()
+    vol_shocks = np.linspace(-req.vol_shock_range_pct, 2 * req.vol_shock_range_pct, req.grid_size).tolist()
+
+    pnl: list[list[float]] = []
+    for vs in vol_shocks:
+        row = []
+        for ss in spot_shocks:
+            shocked_value = 0.0
+            for pos in positions:
+                opt = pos.option_type.value
+                divs = [(d.t, d.D) for d in pos.discrete_dividends]
+                shocked_S = pos.S * (1 + ss)
+                shocked_sigma = max(0.01, pos.sigma * (1 + vs))
+                shocked_value += pos.quantity * black_scholes.price(
+                    shocked_S, pos.K, pos.T, pos.r, shocked_sigma, opt, pos.q, divs
+                )
+            row.append(round(shocked_value - current_value, 4))
+        pnl.append(row)
+
+    return PortfolioPnLHeatmapResponse(
+        spot_shocks=[round(s, 6) for s in spot_shocks],
+        vol_shocks=[round(v, 6) for v in vol_shocks],
+        pnl=pnl,
+        current_portfolio_value=round(current_value, 4),
     )
 
 

@@ -156,6 +156,59 @@ export interface MarketSmileResponse {
   discrete_dividends: DividendPayment[];
 }
 
+export interface PortfolioPosition {
+  id: string;
+  ticker: string;
+  option_type: OptionType;
+  S: number;
+  K: number;
+  T: number;
+  r: number;
+  sigma: number;
+  q: number;
+  quantity: number;
+  n_paths: number;
+  n_steps: number;
+  discrete_dividends: DividendPayment[];
+}
+
+export interface PortfolioPositionGreeks {
+  ticker: string;
+  option_type: string;
+  S: number;
+  K: number;
+  quantity: number;
+  price: number;
+  position_value: number;
+  delta: number;
+  gamma: number;
+  vega: number;
+  theta: number;
+  rho: number;
+  dollar_delta: number;
+  dollar_gamma: number;
+  dollar_vega: number;
+  dollar_theta: number;
+  dollar_rho: number;
+}
+
+export interface PortfolioGreeksResponse {
+  positions: PortfolioPositionGreeks[];
+  net_dollar_delta: number;
+  net_dollar_gamma: number;
+  net_dollar_vega: number;
+  net_dollar_theta: number;
+  net_dollar_rho: number;
+  net_position_value: number;
+}
+
+export interface PortfolioPnLHeatmapResponse {
+  spot_shocks: number[];
+  vol_shocks: number[];
+  pnl: number[][];
+  current_portfolio_value: number;
+}
+
 export const ASIAN_TYPE_LABELS: Record<AsianType, string> = {
   fixed_strike: "Fixed Strike",
   floating_strike: "Floating Strike",

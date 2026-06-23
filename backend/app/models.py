@@ -266,3 +266,64 @@ class MarketSmileResponse(BaseModel):
     points: list[MarketSmilePoint]
     available_expiries: list[str]
     discrete_dividends: list[MarketDividend]
+
+
+class PortfolioPosition(BaseModel):
+    ticker: str = Field(default="", description="Label for the underlying")
+    option_type: OptionType
+    S: float = Field(gt=0)
+    K: float = Field(gt=0)
+    T: float = Field(gt=0)
+    r: float
+    sigma: float = Field(gt=0)
+    q: float = Field(default=0.0, ge=0.0)
+    quantity: int = Field(description="Signed: positive=long, negative=short")
+    discrete_dividends: list[DividendPayment] = Field(default_factory=list)
+
+
+class PortfolioGreeksRequest(BaseModel):
+    positions: list[PortfolioPosition] = Field(min_length=1)
+
+
+class PortfolioPositionGreeks(BaseModel):
+    ticker: str
+    option_type: str
+    S: float
+    K: float
+    quantity: int
+    price: float
+    position_value: float
+    delta: float
+    gamma: float
+    vega: float
+    theta: float
+    rho: float
+    dollar_delta: float
+    dollar_gamma: float
+    dollar_vega: float
+    dollar_theta: float
+    dollar_rho: float
+
+
+class PortfolioGreeksResponse(BaseModel):
+    positions: list[PortfolioPositionGreeks]
+    net_dollar_delta: float
+    net_dollar_gamma: float
+    net_dollar_vega: float
+    net_dollar_theta: float
+    net_dollar_rho: float
+    net_position_value: float
+
+
+class PortfolioPnLHeatmapRequest(BaseModel):
+    positions: list[PortfolioPosition] = Field(min_length=1)
+    spot_shock_range_pct: float = Field(default=0.2, gt=0, le=0.5)
+    vol_shock_range_pct: float = Field(default=0.5, gt=0, le=1.0)
+    grid_size: int = Field(default=20, ge=10, le=40)
+
+
+class PortfolioPnLHeatmapResponse(BaseModel):
+    spot_shocks: list[float]
+    vol_shocks: list[float]
+    pnl: list[list[float]]
+    current_portfolio_value: float
