@@ -219,6 +219,74 @@ int main() {
         EXPECT_TRUE(mc.price >= 0.0, "MC price non-negative case " + std::to_string(c.id));
     }
 
+    // ---- Barrier MC -------------------------------------------------------
+    {
+        double vanilla = options::bs_price(100, 100, 1.0, 0.05, 0.20, "call");
+
+        // Knock-out <= vanilla
+        auto b1 = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                      85, "down_and_out", 50000, 252, 42);
+        EXPECT_TRUE(b1.price <= vanilla + 3 * b1.std_error,
+                    "barrier knock-out <= vanilla");
+
+        // In-out parity: out + in ~ vanilla
+        auto b_out = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                         85, "down_and_out", 50000, 252, 42);
+        auto b_in  = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                         85, "down_and_in", 50000, 252, 42);
+        EXPECT_TRUE(std::abs((b_out.price + b_in.price) - vanilla) < 0.5,
+                    "barrier in-out parity");
+
+        // Far barrier approaches vanilla
+        auto b_far = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                         10, "down_and_out", 50000, 252, 42);
+        EXPECT_TRUE(std::abs(b_far.price - vanilla) < 3 * b_far.std_error,
+                    "barrier far from spot ~ vanilla");
+
+        // Up-and-out near spot is cheap
+        auto b_near = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                          102, "up_and_out", 50000, 252, 42);
+        EXPECT_TRUE(b_near.price < vanilla * 0.1,
+                    "up-and-out near spot is cheap");
+        EXPECT_TRUE(b_near.barrier_hit_pct > 80.0,
+                    "up-and-out near spot hit pct > 80");
+
+        // Seed reproducibility
+        auto br1 = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                       85, "down_and_out", 1000, 252, 7);
+        auto br2 = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                       85, "down_and_out", 1000, 252, 7);
+        EXPECT_NEAR(br1.price, br2.price, 1e-12, "barrier MC seed reproducible");
+    }
+
+    // ---- Asian MC ---------------------------------------------------------
+    {
+        double vanilla = options::bs_price(100, 100, 1.0, 0.05, 0.20, "call");
+
+        // Fixed-strike cheaper than vanilla
+        auto a1 = options::asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                    "fixed_strike", 50000, 252, 42);
+        EXPECT_TRUE(a1.price < vanilla, "asian fixed-strike < vanilla");
+        EXPECT_TRUE(a1.price > 0.0, "asian fixed-strike positive");
+
+        // Floating-strike positive
+        auto a2 = options::asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                    "floating_strike", 50000, 252, 42);
+        EXPECT_TRUE(a2.price > 0.0, "asian floating-strike positive");
+
+        // Put fixed-strike positive
+        auto a3 = options::asian_mc(100, 100, 1.0, 0.05, 0.20, "put",
+                                    "fixed_strike", 50000, 252, 42);
+        EXPECT_TRUE(a3.price > 0.0, "asian put fixed-strike positive");
+
+        // Seed reproducibility
+        auto ar1 = options::asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                     "fixed_strike", 1000, 252, 7);
+        auto ar2 = options::asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                     "fixed_strike", 1000, 252, 7);
+        EXPECT_NEAR(ar1.price, ar2.price, 1e-12, "asian MC seed reproducible");
+    }
+
     // ---- Summary -----------------------------------------------------------
     int passed = g_total - g_failed;
     std::cout << passed << "/" << g_total << " tests passed";

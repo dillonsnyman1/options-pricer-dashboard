@@ -1,7 +1,7 @@
 # C++ reference
 
 Header-only, C++17, no external dependencies. Include `options.hpp` and
-you get all five algorithms in the `options` namespace.
+you get all seven algorithms in the `options` namespace.
 
 ## Usage
 
@@ -22,6 +22,14 @@ options::MCResult mc = options::monte_carlo(100, 100, 1.0, 0.05, 0.20, "call", 1
 
 options::BinomialResult tree = options::binomial_tree(100, 100, 1.0, 0.05, 0.20, "call", 200);
 // tree.european_price ~10.44, tree.american_price ~10.44
+
+options::BarrierMCResult b = options::barrier_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                                  85, "down_and_out", 50000, 252, 42);
+// b.price ~10.0, b.barrier_hit_pct ~8.5
+
+options::MCResult a = options::asian_mc(100, 100, 1.0, 0.05, 0.20, "call",
+                                        "fixed_strike", 50000, 252, 42);
+// a.price ~5.8
 ```
 
 ## Build and test

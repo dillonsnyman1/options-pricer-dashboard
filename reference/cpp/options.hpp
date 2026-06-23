@@ -2,7 +2,8 @@
 
 /*
  * Black-Scholes option pricing, Greeks, Newton-Raphson IV solver,
- * Monte Carlo with antithetic variates, and CRR binomial tree.
+ * Monte Carlo with antithetic variates, CRR binomial tree, and
+ * barrier/Asian option pricing via Monte Carlo.
  *
  * Header-only, C++17, no external dependencies.
  *
@@ -66,6 +67,13 @@ struct MCResult {
     double price;
     double std_error;
     int    n_paths;
+};
+
+struct BarrierMCResult {
+    double price;
+    double std_error;
+    int    n_paths;
+    double barrier_hit_pct;
 };
 
 struct BinomialResult {
@@ -224,6 +232,129 @@ inline BinomialResult binomial_tree(double S, double K, double T, double r, doub
     double eur = V_eur[0];
     double am  = V_am[0];
     return {eur, am, am - eur};
+}
+
+// ---------------------------------------------------------------------------
+// Barrier option pricing via Monte Carlo with antithetic variates
+// ---------------------------------------------------------------------------
+
+inline BarrierMCResult barrier_mc(double S, double K, double T, double r, double sigma,
+                                   const std::string& option_type,
+                                   double barrier, const std::string& barrier_type,
+                                   int n_paths = 100000, int n_steps = 252,
+                                   unsigned seed = 42) {
+    std::mt19937_64 rng(seed);
+    std::normal_distribution<double> dist(0.0, 1.0);
+
+    int    half   = n_paths / 2;
+    double dt     = T / n_steps;
+    double drift  = (r - 0.5 * sigma * sigma) * dt;
+    double vol_dt = sigma * std::sqrt(dt);
+    double disc   = std::exp(-r * T);
+
+    bool is_down = barrier_type.compare(0, 4, "down") == 0;
+    bool is_out  = barrier_type.size() >= 3 &&
+                   barrier_type.compare(barrier_type.size() - 3, 3, "out") == 0;
+
+    std::vector<double> payoffs;
+    payoffs.reserve(n_paths);
+    int hits = 0;
+
+    for (int i = 0; i < half; ++i) {
+        std::vector<double> draws(n_steps);
+        for (int j = 0; j < n_steps; ++j)
+            draws[j] = dist(rng);
+
+        for (double sign : {1.0, -1.0}) {
+            double s = S;
+            bool hit = false;
+            for (int j = 0; j < n_steps; ++j) {
+                s *= std::exp(drift + vol_dt * sign * draws[j]);
+                if (is_down && s <= barrier) hit = true;
+                else if (!is_down && s >= barrier) hit = true;
+            }
+
+            if (hit) ++hits;
+
+            double pf = (option_type == "call") ? std::max(s - K, 0.0)
+                                                 : std::max(K - s, 0.0);
+            if (is_out)
+                pf = hit ? 0.0 : pf;
+            else
+                pf = hit ? pf : 0.0;
+
+            payoffs.push_back(disc * pf);
+        }
+    }
+
+    double mean = 0.0;
+    for (double x : payoffs) mean += x;
+    mean /= static_cast<double>(payoffs.size());
+
+    double var = 0.0;
+    for (double x : payoffs) var += (x - mean) * (x - mean);
+    var /= static_cast<double>(payoffs.size() - 1);
+
+    return {mean, std::sqrt(var / payoffs.size()), n_paths,
+            static_cast<double>(hits) / static_cast<double>(payoffs.size()) * 100.0};
+}
+
+// ---------------------------------------------------------------------------
+// Asian option pricing via Monte Carlo with antithetic variates
+// ---------------------------------------------------------------------------
+
+inline MCResult asian_mc(double S, double K, double T, double r, double sigma,
+                          const std::string& option_type,
+                          const std::string& asian_type = "fixed_strike",
+                          int n_paths = 100000, int n_steps = 252,
+                          unsigned seed = 42) {
+    std::mt19937_64 rng(seed);
+    std::normal_distribution<double> dist(0.0, 1.0);
+
+    int    half   = n_paths / 2;
+    double dt     = T / n_steps;
+    double drift  = (r - 0.5 * sigma * sigma) * dt;
+    double vol_dt = sigma * std::sqrt(dt);
+    double disc   = std::exp(-r * T);
+
+    std::vector<double> payoffs;
+    payoffs.reserve(n_paths);
+
+    for (int i = 0; i < half; ++i) {
+        std::vector<double> draws(n_steps);
+        for (int j = 0; j < n_steps; ++j)
+            draws[j] = dist(rng);
+
+        for (double sign : {1.0, -1.0}) {
+            double s = S;
+            double running_sum = S;
+            for (int j = 0; j < n_steps; ++j) {
+                s *= std::exp(drift + vol_dt * sign * draws[j]);
+                running_sum += s;
+            }
+
+            double avg = running_sum / (n_steps + 1);
+            double pf;
+            if (asian_type == "fixed_strike")
+                pf = (option_type == "call") ? std::max(avg - K, 0.0)
+                                              : std::max(K - avg, 0.0);
+            else
+                pf = (option_type == "call") ? std::max(s - avg, 0.0)
+                                              : std::max(avg - s, 0.0);
+
+            payoffs.push_back(disc * pf);
+        }
+    }
+
+    double mean = 0.0;
+    for (double x : payoffs) mean += x;
+    mean /= static_cast<double>(payoffs.size());
+
+    double var = 0.0;
+    for (double x : payoffs) var += (x - mean) * (x - mean);
+    var /= static_cast<double>(payoffs.size() - 1);
+
+    return {mean, std::sqrt(var / payoffs.size()), n_paths};
 }
 
 } // namespace options
