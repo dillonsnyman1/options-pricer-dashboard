@@ -22,5 +22,9 @@ dist/
 tfplan
 crash.log
 
+# C++ build artifacts
+reference/cpp/test_options
+reference/cpp/build/
+
 # OS
 .DS_Store

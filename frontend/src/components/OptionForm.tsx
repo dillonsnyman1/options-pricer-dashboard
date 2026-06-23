@@ -43,7 +43,7 @@ export function OptionForm({ inputs, onChange }: Props) {
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const fetchedTicker = useRef("");
-  const divDebounce = useRef<ReturnType<typeof setTimeout>>();
+  const divDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const CACHE_TTL = 60;
 

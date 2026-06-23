@@ -80,7 +80,7 @@ export function IVSmileChart({ inputs }: Props) {
         const atmPoint = res.points.length > 0
           ? res.points.reduce((a, b) => Math.abs(a.moneyness) < Math.abs(b.moneyness) ? a : b)
           : null;
-        setMarketMeta({ ticker: res.ticker, spot: res.spot, expiry: res.expiry, expiry_T: res.expiry_T, available_expiries: res.available_expiries, atm_iv: atmPoint?.implied_vol ?? null });
+        setMarketMeta({ ticker: res.ticker, spot: res.spot, dividend_yield: res.dividend_yield, expiry: res.expiry, expiry_T: res.expiry_T, available_expiries: res.available_expiries, discrete_dividends: res.discrete_dividends, atm_iv: atmPoint?.implied_vol ?? null });
         if (selectedExpiry === null) {
           setSelectedExpiry(res.expiry);
         }
